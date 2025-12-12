@@ -96,14 +96,16 @@ function AppContent() {
           />
         </div>
 
-        {/* Desktop Sidebar */}
+                {/* Desktop Sidebar */}
         <div className="hidden md:block pt-16">
           <Sidebar
             isOpen={true}
             activeSection={activeSection}
             setActiveSection={setActiveSection}
+            closeSidebar={() => {}} // explicit no-op for desktop
           />
         </div>
+
 
         {/* MAIN CONTENT */}
         <main className="content flex-1 p-6 overflow-y-auto">

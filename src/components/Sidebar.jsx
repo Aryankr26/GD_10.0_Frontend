@@ -31,14 +31,31 @@ const menuItems = [
   { id: "mill", label: "Party / Mill", icon: Factory }
 ];
 
-export function Sidebar({ isOpen, activeSection, setActiveSection, closeSidebar }) {
+export function Sidebar({
+  isOpen = true,
+  activeSection,
+  setActiveSection = () => {},
+  closeSidebar = () => {}, // default no-op
+}) {
+  // helper to safely call closeSidebar if it's a function
+  const safeClose = () => {
+    if (typeof closeSidebar === "function") {
+      try {
+        closeSidebar();
+      } catch (e) {
+        // swallow to avoid runtime crash if parent misbehaves
+        // eslint-disable-next-line no-console
+        console.warn("closeSidebar threw:", e);
+      }
+    }
+  };
+
   return (
     <aside
       className={cn(
         "fixed md:static left-0 top-16 z-40 w-64 h-[calc(100vh-4rem)]",
         "bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700",
         "shadow-lg transform transition-transform duration-300",
-
         // mobile slide animation
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}
@@ -46,7 +63,7 @@ export function Sidebar({ isOpen, activeSection, setActiveSection, closeSidebar 
       {/* Mobile close button */}
       <div className="md:hidden flex justify-end p-2">
         <button
-          onClick={closeSidebar}
+          onClick={safeClose}
           className="p-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
         >
           ✕
@@ -60,8 +77,16 @@ export function Sidebar({ isOpen, activeSection, setActiveSection, closeSidebar 
             <button
               key={item.id}
               onClick={() => {
-                setActiveSection(item.id);
-                closeSidebar();
+                // change section
+                try {
+                  setActiveSection(item.id);
+                } catch (e) {
+                  // guard against bad parent prop
+                  // eslint-disable-next-line no-console
+                  console.warn("setActiveSection error:", e);
+                }
+                // close sidebar on mobile (safe)
+                safeClose();
               }}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
