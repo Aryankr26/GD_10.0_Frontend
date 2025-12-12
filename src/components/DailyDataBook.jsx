@@ -25,7 +25,7 @@ export function DailyDataBook() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const API_URL = "https://gd-7-0-a.onrender.com";
+  const API_URL = "https://gd-10-0-backend.onrender.com";
   const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
   const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 

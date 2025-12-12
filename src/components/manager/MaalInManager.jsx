@@ -10,7 +10,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from ".
 import { toast } from "sonner";
 import { Plus, Save, Trash2 } from "lucide-react";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://gd-7-0-a.onrender.com";
+const API_URL = process.env.REACT_APP_API_URL || "https://gd-10-0-backend.onrender.com";
 
 
 export function MaalInManager() {

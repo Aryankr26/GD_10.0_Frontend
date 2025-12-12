@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Save, X } from "lucide-react";
 import { formatDate } from "../../utils/dateFormat";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://gd-7-0-a.onrender.com";
+const API_URL = process.env.REACT_APP_API_URL || "https://gd-10-0-backend.onrender.com";
 
 
 export function TruckDriverManager() {

@@ -24,7 +24,7 @@ import { RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "../utils/dateFormat";
 
-const API_URL = "https://gd-7-0-a.onrender.com";
+const API_URL = "https://gd-10-0-backend.onrender.com";
 
 export function FeriwalaSection() {
   const [records, setRecords] = useState([]);
