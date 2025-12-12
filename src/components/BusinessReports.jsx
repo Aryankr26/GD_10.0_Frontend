@@ -133,7 +133,7 @@ const expenseCategoryData = [
 
 // Feriwala vs Kabadiwala Balance
 const dealerBalanceData = [
-  { name: "Vijay Feriwala", balance: 15000, type: "Feriwala" },
+  { name: "Viy Feriwala", balance: 15000, type: "Feriwala" },
   { name: "Krishna Feriwala", balance: 18600, type: "Feriwala" },
   { name: "Ramesh Feriwala", balance: 32000, type: "Feriwala" },
   { name: "Dinesh Feriwala", balance: 30500, type: "Feriwala" },
