@@ -12,7 +12,7 @@ import { Label } from "../ui/label";
 import { toast } from "sonner";
 import { Plus, Trash2, Save, X, IndianRupee } from "lucide-react";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://gd-10-0-backend.onrender.com";
+const API_URL = process.env.REACT_APP_API_URL || "https://gd-10-0-backend-1.onrender.com";
 
 
 export function FeriwalaManager() {
