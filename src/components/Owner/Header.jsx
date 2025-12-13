@@ -1,29 +1,24 @@
 // components/Header.jsx
-import { Bell, Search, Moon, Sun, LogOut, Menu as MenuIcon } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Bell, Search, Moon, Sun, LogOut } from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "./ui/dropdown-menu";
-import { useAuth } from "../utils/authContext";
+} from "../ui/dropdown-menu";
+import { useAuth } from "../../utils/authContext";
 
-export function Header({ darkMode, toggleDarkMode, toggleSidebar }) {
+export function Header({ darkMode, toggleDarkMode }) {
   const { user, logout } = useAuth();
 
   return (
-    <header className="bg-white dark:bg-gray-800 px-4 py-3 border-b dark:border-gray-700 sticky top-0 z-50">
+    <header className="bg-white dark:bg-gray-800 px-4 py-3 border-b dark:border-gray-700 fixed top-0 w-full z-50">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-
-        {/* Hamburger */}
-        <button onClick={toggleSidebar} className="p-2 md:hidden">
-          <MenuIcon className="w-6 h-6 text-gray-700 dark:text-white" />
-        </button>
 
         {/* Logo */}
         <div className="flex items-center gap-3">
@@ -32,7 +27,9 @@ export function Header({ darkMode, toggleDarkMode, toggleSidebar }) {
           </div>
           <div>
             <h1 className="text-gray-900 dark:text-white">ScrapCo</h1>
-            <p className="text-gray-500 dark:text-gray-400">Godown Management</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              Godown Management
+            </p>
           </div>
         </div>
 
@@ -44,9 +41,13 @@ export function Header({ darkMode, toggleDarkMode, toggleSidebar }) {
           </div>
         </div>
 
-        {/* Right controls */}
+        {/* Right Controls */}
         <div className="flex items-center gap-3">
-          <input type="date" className="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700" />
+          <input
+            type="date"
+            className="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-sm"
+            defaultValue={new Date().toISOString().split("T")[0]}
+          />
 
           <Button onClick={toggleDarkMode} variant="ghost" size="icon">
             {darkMode ? <Sun /> : <Moon />}
@@ -56,22 +57,20 @@ export function Header({ darkMode, toggleDarkMode, toggleSidebar }) {
             <Bell />
           </Button>
 
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost">
+              <Button variant="ghost" className="px-2">
                 <Avatar>
-                  <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
+                  <AvatarFallback>{user?.name?.[0] ?? "U"}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
+              <div className="px-3 py-1 text-xs text-gray-500">{user?.email}</div>
               <DropdownMenuSeparator />
-
-              <DropdownMenuItem>{user?.email}</DropdownMenuItem>
-              <DropdownMenuSeparator />
-
               <DropdownMenuItem onClick={logout} className="text-red-600">
                 <LogOut className="mr-2" /> Logout
               </DropdownMenuItem>

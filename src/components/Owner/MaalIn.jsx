@@ -5,7 +5,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "./ui/card";
+} from "../ui/card";
 
 import {
   Table,
@@ -14,14 +14,14 @@ import {
   TableHeader,
   TableHead,
   TableRow,
-} from "./ui/table";
+} from "../ui/table";
 
-import { Button } from "./ui/button";
-import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
-import { Calendar as CalendarComponent } from "./ui/calendar";
+import { Button } from "../ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
+import { Calendar as CalendarComponent } from "../ui/calendar";
 
 import { Calendar, RefreshCcw } from "lucide-react";
-import { formatDate } from "../utils/dateFormat";
+import { formatDate } from "../../utils/dateFormat";
 import { toast } from "sonner";
 
 const API_URL = "https://gd-10-0-backend-1.onrender.com";

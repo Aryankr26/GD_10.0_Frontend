@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { useAuth } from '../utils/authContext';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useAuth } from '../../utils/authContext';
 import { toast } from 'sonner';
 import { LogIn, User, Lock, Building2 } from 'lucide-react';
 

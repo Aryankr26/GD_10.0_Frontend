@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import {
   LogOut,
   TrendingUp,
@@ -19,14 +19,14 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "./ui/hover-card";
+} from "../ui/hover-card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
+} from "../ui/dialog";
 import {
   LineChart,
   Line,
@@ -39,9 +39,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { useAuth } from "../utils/authContext";
-import { useData } from "../utils/dataContext";
-import { formatINR } from "../utils/currencyFormat";
+import { useAuth } from "../../utils/authContext";
+import { useData } from "../../utils/dataContext";
+import { formatINR } from "../../utils/currencyFormat";
 
 export function DashboardOverview() {
   const { user, logout } = useAuth();

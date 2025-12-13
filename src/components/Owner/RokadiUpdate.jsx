@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -12,17 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
+} from "../ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from "../ui/select";
 import { Wallet, Building2, ArrowRightLeft, Eye, TrendingUp } from "lucide-react";
-import { useData } from "../utils/dataContext";
-import { formatINR } from "../utils/currencyFormat";
+import { useData } from "../../utils/dataContext";
+import { formatINR } from "../../utils/currencyFormat";
 import { toast } from "sonner";
 import { OwnerReadOnlyBadge } from "./OwnerBadge";
 

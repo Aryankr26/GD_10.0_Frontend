@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription
-} from "./ui/card";
+} from "../ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from "./ui/table";
-import { Button } from "./ui/button";
-import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
-import { Calendar as CalendarComponent } from "./ui/calendar";
+} from "../ui/table";
+import { Button } from "../ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
+import { Calendar as CalendarComponent } from "../ui/calendar";
 import { Calendar, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
-import { formatDate } from "../utils/dateFormat";
+import { formatDate } from "../../utils/dateFormat";
 
 const API_URL = "https://gd-10-0-backend-1.onrender.com";
 const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
