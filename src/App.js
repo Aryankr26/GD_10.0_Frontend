@@ -26,18 +26,18 @@ import { DataProvider } from "./utils/dataContext";
 
 // Navigation menu items
 export const menuItems = [
-  { id: "dashboard", label: "Dashboard" },
+ // { id: "dashboard", label: "Dashboard" },
   { id: "daily-book", label: "Daily Data Book" },
   { id: "rokadi", label: "Rokadi Update" },
-  { id: "bank", label: "Bank Account" },
+ // { id: "bank", label: "Bank Account" },
   { id: "labour", label: "Labour" },
   { id: "feriwala", label: "Feriwala" },
-  { id: "truck-driver", label: "Truck Driver" },
+  //{ id: "truck-driver", label: "Truck Driver" },
   { id: "maal-in", label: "Maal In" },
   { id: "kabadiwala", label: "Kabadiwala" },
-  { id: "partnership", label: "Partnership" },
+ // { id: "partnership", label: "Partnership" },
   { id: "rates-update", label: "Rates Update" },
-  { id: "business-reports", label: "Business Reports" },
+ // { id: "business-reports", label: "Business Reports" },
   { id: "mill", label: "Party / Mill" },
 ];
 

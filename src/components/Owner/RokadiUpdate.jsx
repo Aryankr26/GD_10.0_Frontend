@@ -1,344 +1,404 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+// src/components/Owner/RokadiUpdate.jsx
+
+import { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Badge } from "../ui/badge";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   DialogTrigger,
 } from "../ui/dialog";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem,
 } from "../ui/select";
-import { Wallet, Building2, ArrowRightLeft, Eye, TrendingUp } from "lucide-react";
-import { useData } from "../../utils/dataContext";
-import { formatINR } from "../../utils/currencyFormat";
+import { RefreshCcw, Wallet, Building2, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { formatINR } from "../../utils/currencyFormat";
 import { OwnerReadOnlyBadge } from "./OwnerBadge";
 
-export function RokadiUpdate() {
-  const { rokadiAccounts, updateRokadiAccount, bankAccounts } = useData();
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
-  const [viewTransactionsDialogOpen, setViewTransactionsDialogOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState("");
+const API_URL = "https://gd-10-0-backend-1.onrender.com";
+const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
+const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 
-  const [transfer, setTransfer] = useState({
-    fromAccount: "",
-    toAccount: "",
-    toType: "cash",
-    amount: 0,
-    description: "",
+export function RokadiUpdate() {
+  const [cashAccounts, setCashAccounts] = useState([]);
+  const [bankAccount, setBankAccount] = useState(null);
+  const [totalRokadi, setTotalRokadi] = useState(0);
+  const [bankHistoryOpen, setBankHistoryOpen] = useState(false);
+const [bankTransactions, setBankTransactions] = useState([]);
+const [bankLoading, setBankLoading] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  /* ===============================
+     ADD CASH CREDIT STATE
+  =============================== */
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    account_id: "",
+    amount: "",
+    date: new Date().toISOString().split("T")[0],
+    note: "",
   });
 
-  const totalBalance = rokadiAccounts.reduce((sum, account) => sum + account.balance, 0);
+  /* ===============================
+     LOAD ROKADI
+  =============================== */
+  const loadRokadi = async () => {
+    try {
+      setLoading(true);
 
-  const handleTransfer = () => {
-    if (!transfer.fromAccount || !transfer.toAccount || transfer.amount <= 0) {
-      toast.error("Please fill all transfer details");
-      return;
+      const res = await fetch(
+        `${API_URL}/api/rokadi/accounts?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
+      );
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      const accounts = data.accounts || [];
+      const cash = accounts.filter(a => a.account_type === "cash");
+      const bank = accounts.find(a => a.account_type === "bank") || null;
+
+      setCashAccounts(cash);
+      setBankAccount(bank);
+
+      const cashTotal = cash.reduce((s, a) => s + Number(a.balance || 0), 0);
+      const bankTotal = bank ? Number(bank.balance || 0) : 0;
+      setTotalRokadi(cashTotal + bankTotal);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load Rokadi");
+    } finally {
+      setLoading(false);
     }
-
-    const fromAcc = rokadiAccounts.find(a => a.id === transfer.fromAccount);
-    if (!fromAcc || fromAcc.balance < transfer.amount) {
-      toast.error("Insufficient balance in source account");
-      return;
-    }
-
-    // Update source account
-    updateRokadiAccount(transfer.fromAccount, {
-      balance: fromAcc.balance - transfer.amount,
-    });
-
-    // Update destination account if it's a cash account
-    if (transfer.toType === "cash") {
-      const toAcc = rokadiAccounts.find(a => a.id === transfer.toAccount);
-      if (toAcc) {
-        updateRokadiAccount(transfer.toAccount, {
-          balance: toAcc.balance + transfer.amount,
-        });
-      }
-    }
-
-    toast.success(`${formatINR(transfer.amount)} transferred successfully!`);
-    setTransfer({ fromAccount: "", toAccount: "", toType: "cash", amount: 0, description: "" });
-    setTransferDialogOpen(false);
   };
+
+  useEffect(() => {
+    loadRokadi();
+  }, []);
+
+  /* ===============================
+     ADD CASH CREDIT
+  =============================== */
+  const submitAddCash = async () => {
+    if (!addForm.account_id || !addForm.amount) {
+      toast.error("Select account & amount");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/rokadi/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_id: COMPANY_ID,
+          godown_id: GODOWN_ID,
+          account_id: addForm.account_id,
+          type: "credit", // ✅ CREDIT ONLY
+          amount: Number(addForm.amount),
+          category: "manual_cash",
+          reference: addForm.note,
+          date: addForm.date,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      toast.success("Cash added successfully");
+      setAddOpen(false);
+      setAddForm({
+        account_id: "",
+        amount: "",
+        date: new Date().toISOString().split("T")[0],
+        note: "",
+      });
+      loadRokadi();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add cash");
+    }
+  };
+
+  const loadBankHistory = async () => {
+  try {
+    setBankLoading(true);
+    const res = await fetch(
+      `${API_URL}/api/rokadi/history/bank?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
+    );
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.error);
+    setBankTransactions(data.transactions || []);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to load bank history");
+  } finally {
+    setBankLoading(false);
+  }
+};
+
 
   return (
     <div className="space-y-6">
+
+      {/* ================= HEADER ================= */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">Rokadi & Cash Management</h2>
-          <p className="text-gray-500 dark:text-gray-400">Multi-account cash position tracking</p>
+          <h2 className="text-gray-900 mb-1">Rokadi Update</h2>
+          <p className="text-gray-500">Cash & bank position</p>
         </div>
-        <OwnerReadOnlyBadge />
+
+        <div className="flex gap-2">
+          <OwnerReadOnlyBadge />
+          <Button variant="outline" onClick={loadRokadi}>
+            <RefreshCcw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      {/* Summary Row - Total Balance */}
-      <Card className="border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-800">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+      {/* ================= TOTAL ================= */}
+      <Card className="border-2 border-green-200 bg-green-50">
+        <CardHeader className="flex flex-row justify-between items-center">
           <div>
-            <CardTitle className="text-green-600 dark:text-green-400">Total Cash in Hand</CardTitle>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Combined balance across all cash accounts
-            </p>
+            <CardTitle className="text-green-700">
+              Total Rokadi
+            </CardTitle>
+            <CardDescription>Cash + Bank</CardDescription>
           </div>
-          <Wallet className="w-8 h-8 text-green-600" />
+          <Wallet className="w-8 h-8 text-green-700" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl text-green-600 dark:text-green-400 mb-3">{formatINR(totalBalance)}</div>
-          <div className="flex gap-2">
-            <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ArrowRightLeft className="h-4 w-4" />
-                  Transfer Funds
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Transfer Funds</DialogTitle>
-                  <DialogDescription>
-                    Transfer cash between accounts or to bank
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>From Account (Cash)</Label>
-                    <Select value={transfer.fromAccount} onValueChange={(val) => setTransfer({ ...transfer, fromAccount: val })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select source account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rokadiAccounts.map(account => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.accountName} - {formatINR(account.balance)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Transfer To</Label>
-                    <Select value={transfer.toType} onValueChange={(val) => setTransfer({ ...transfer, toType: val, toAccount: "" })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">Cash Account</SelectItem>
-                        <SelectItem value="bank">Bank Account</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>To Account</Label>
-                    <Select value={transfer.toAccount} onValueChange={(val) => setTransfer({ ...transfer, toAccount: val })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select destination account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {transfer.toType === "cash"
-                          ? rokadiAccounts
-                              .filter(a => a.id !== transfer.fromAccount)
-                              .map(account => (
-                                <SelectItem key={account.id} value={account.id}>
-                                  {account.accountName} - {formatINR(account.balance)}
-                                </SelectItem>
-                              ))
-                          : bankAccounts.map(account => (
-                              <SelectItem key={account.id} value={account.id}>
-                                {account.bankName} - ****{account.accountNumber.slice(-4)}
-                              </SelectItem>
-                            ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Amount</Label>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={transfer.amount || ""}
-                      onChange={(e) => setTransfer({ ...transfer, amount: parseFloat(e.target.value) || 0 })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Description (Optional)</Label>
-                    <Input
-                      placeholder="Transfer purpose..."
-                      value={transfer.description}
-                      onChange={(e) => setTransfer({ ...transfer, description: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleTransfer}>Transfer</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+          <div className="text-3xl font-bold text-green-700">
+            {formatINR(totalRokadi)}
           </div>
         </CardContent>
       </Card>
 
-      {/* Individual Cash Account Cards */}
-      <div className="flex grid-cols-1 md:grid-cols-3 gap-4">
-        {rokadiAccounts.map((account, index) => (
-          <Card key={account.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm text-gray-600 dark:text-gray-400">
-                  {account.accountName}
-                </CardTitle>
-                <Building2 className="w-5 h-5 text-blue-600" />
-              </div>
-              <Badge variant="outline" className="w-fit mt-2">
-                Account #{index + 1}
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl text-gray-900 dark:text-white mb-1">
-                {formatINR(account.balance)}
-              </div>
-              <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
-                <TrendingUp className="h-3 w-3" />
-                <span>{((account.balance / totalBalance) * 100).toFixed(1)}% of total</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-                onClick={() => {
-                  setSelectedAccount(account.id);
-                  setViewTransactionsDialogOpen(true);
-                }}
-              >
-                <Eye className="h-3 w-3" />
-                View Transactions
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Bank Balance Summary */}
-      {bankAccounts.length > 0 && (
-        <Card className="border-2 border-purple-200 dark:border-purple-800">
-          <CardHeader>
-            <CardTitle className="text-purple-600 dark:text-purple-400">
-              Bank Accounts Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {bankAccounts.map((account) => (
-                <div
-                  key={account.id}
-                  className="flex justify-between items-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
-                >
-                  <div>
-                    <p className="text-gray-900 dark:text-white mb-1">{account.bankName}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-gray-500 dark:text-gray-400 text-xs">
-                        ****{account.accountNumber.slice(-4)}
-                      </p>
-                      <Badge variant="outline" className="text-xs">
-                        {account.accountType}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-purple-600 dark:text-purple-400">
-                      {formatINR(account.currentBalance)}
-                    </div>
-                    <Button variant="ghost" size="sm" className="mt-1 h-6 text-xs">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex justify-between items-center p-4 bg-purple-100 dark:bg-purple-900/40 rounded-lg border-2 border-purple-300 dark:border-purple-700 mt-4">
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400 mb-1">Total Bank Balance</p>
-                  <p className="text-gray-900 dark:text-white">
-                    Across {bankAccounts.length} account{bankAccounts.length !== 1 ? "s" : ""}
-                  </p>
-                </div>
-                <div className="text-xl text-purple-600 dark:text-purple-400">
-                  {formatINR(bankAccounts.reduce((sum, acc) => sum + acc.currentBalance, 0))}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Detailed Breakdown */}
+      {/* ================= CASH ================= */}
       <Card>
-        <CardHeader>
-          <CardTitle>Cash Flow Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {rokadiAccounts.map((account) => (
-              <div
-                key={account.id}
-                className="flex justify-between items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-              >
+        <CardHeader className="flex flex-row justify-between items-center">
+          <div>
+            <CardTitle>Cash in Hand</CardTitle>
+            <CardDescription>Manual credit only</CardDescription>
+          </div>
+
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                Add Cash
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Cash (Credit)</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3">
                 <div>
-                  <p className="text-gray-900 dark:text-white mb-1">{account.accountName}</p>
-                  <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${(account.balance / totalBalance) * 100}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-                    {((account.balance / totalBalance) * 100).toFixed(1)}% of total balance
-                  </p>
+                  <Label>Cash Account</Label>
+                  <Select
+                    value={addForm.account_id}
+                    onValueChange={(v) =>
+                      setAddForm({ ...addForm, account_id: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select cash account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cashAccounts.map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.account_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="text-blue-600 dark:text-blue-400 text-lg">
-                  {formatINR(account.balance)}
+
+                <div>
+                  <Label>Amount</Label>
+                  <Input
+                    type="number"
+                    value={addForm.amount}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, amount: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={addForm.date}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, date: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label>Note</Label>
+                  <Input
+                    placeholder="Optional note"
+                    value={addForm.note}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, note: e.target.value })
+                    }
+                  />
                 </div>
               </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={submitAddCash}>Add Cash</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {cashAccounts.map((a) => (
+              <Card key={a.id}>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    {a.account_name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-semibold">
+                    {formatINR(a.balance)}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* View Transactions Dialog */}
-      <Dialog open={viewTransactionsDialogOpen} onOpenChange={setViewTransactionsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* ================= BANK ================= */}
+     <Card>
+  <CardHeader className="flex flex-row justify-between items-center">
+    <CardTitle>Bank</CardTitle>
+
+    {bankAccount && (
+      <Dialog
+        open={bankHistoryOpen}
+        onOpenChange={(v) => {
+          setBankHistoryOpen(v);
+          if (v) loadBankHistory();
+        }}
+      >
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            History
+          </Button>
+        </DialogTrigger>
+
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Transaction History</DialogTitle>
-            <DialogDescription>
-              Recent transactions for {rokadiAccounts.find(a => a.id === selectedAccount)?.accountName}
-            </DialogDescription>
+            <DialogTitle>Bank Statement</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-center text-gray-500 py-8">
-              No transactions recorded yet
-            </p>
-          </div>
+
+          {bankLoading ? (
+            <p className="text-center py-6">Loading…</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Particulars</TableHead>
+                  <TableHead className="text-right">Debit</TableHead>
+                  <TableHead className="text-right">Credit</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {bankTransactions.length > 0 ? (
+                  bankTransactions.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell>
+                        {new Date(t.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{t.reference || t.category}</TableCell>
+                      <TableCell className="text-right text-red-600">
+                        {t.type === "debit" ? formatINR(t.amount) : "-"}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {t.type === "credit" ? formatINR(t.amount) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-6">
+                      No transactions
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </DialogContent>
       </Dialog>
+    )}
+  </CardHeader>
+
+  <CardContent>
+    {!bankAccount ? (
+      <p className="text-gray-500">No bank account</p>
+    ) : (
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-medium">{bankAccount.account_name}</p>
+          <p className="text-sm text-gray-500">Single bank</p>
+        </div>
+        <div className="text-xl font-semibold text-purple-600">
+          {formatINR(bankAccount.balance)}
+        </div>
+      </div>
+    )}
+  </CardContent>
+</Card>
+
+      {loading && (
+        <p className="text-center text-gray-500">Updating…</p>
+      )}
     </div>
   );
 }
+
+
+
+export default RokadiUpdate;

@@ -9,18 +9,18 @@ import {
 } from "../ui/dropdown-menu";
 
 /* IMPORTS: same folder (adjust paths if your files are in a different folder) */
-import { DashboardOverview } from "./DashboardOverview";
+import DashboardOverview  from "./DashboardOverview";
 import { DailyDataBook } from "./DailyDataBook";
 import { RokadiUpdate } from "./RokadiUpdate";
-import { BankAccount } from "./BankAccount";
+//import { BankAccount } from "./BankAccount";
 import { FeriwalaSection } from "./FeriwalaSection";
 import { LabourSection } from "./LabourSection";
 import KabadiwalaSection from "./KabadiwalaSection";
-import { PartnershipAccount } from "./PartnershipAccount";
-import { BusinessReports } from "./BusinessReports";
+//import { PartnershipAccount } from "./PartnershipAccount";
+//import { BusinessReports } from "./BusinessReports";
 import { MillSection } from "./MillSection";
 import RatesUpdate from "./RatesUpdate";
-import TruckDriver from "./TruckDriver";
+//import TruckDriver from "./TruckDriver";
 import MaalIn from "./MaalIn";
 
 /* menu items */
@@ -28,21 +28,21 @@ const menuItems = [
   { id: "dashboard", label: "Dashboard" },
   { id: "daily-book", label: "Daily Data Book" },
   { id: "rokadi", label: "Rokadi Update" },
-  { id: "bank", label: "Bank Account" },
+  //{ id: "bank", label: "Bank Account" },
   { id: "labour", label: "Labour" },
   { id: "feriwala", label: "Feriwala" },
-  { id: "truck-driver", label: "Truck Driver" },
+  //{ id: "truck-driver", label: "Truck Driver" },
   { id: "maal-in", label: "Maal In" },
   { id: "kabadiwala", label: "Kabadiwala" },
-  { id: "partnership", label: "Partnership" },
+ // { id: "partnership", label: "Partnership" },
   { id: "rates-update", label: "Rates Update" },
-  { id: "business-reports", label: "Business Reports" },
+ // { id: "business-reports", label: "Business Reports" },
   { id: "mill", label: "Party / Mill" },
 ];
 
 export function OwnersDashboard(props) {
   // props: activeSection (optional), setActiveSection (optional)
-  const { activeSection: activeFromProps = "dashboard", setActiveSection } = props;
+  const { activeSection: activeFromProps = "daily-book", setActiveSection } = props;
 
   // If parent didn't provide a state setter, manage local state
   const [localActive, setLocalActive] = useState(activeFromProps);
@@ -53,7 +53,7 @@ export function OwnersDashboard(props) {
   // helper to change section safely
   const setSection = (id) => {
     if (typeof setActiveSection === "function") {
-      try {
+      try { 
         setActiveSection(id);
       } catch (e) {
         // fallback to local state on error
@@ -74,28 +74,28 @@ export function OwnersDashboard(props) {
         return <DailyDataBook />;
       case "maal-in":
         return <MaalIn />;
-      case "truck-driver":
-        return <TruckDriver />;
+     // case "truck-driver":
+        //return <TruckDriver />;
       case "rokadi":
         return <RokadiUpdate />;
-      case "bank":
-        return <BankAccount />;
+      //case "bank":
+        //return <BankAccount />;
       case "labour":
         return <LabourSection />;
       case "feriwala":
         return <FeriwalaSection />;
       case "kabadiwala":
         return <KabadiwalaSection />;
-      case "partnership":
-        return <PartnershipAccount />;
+      //case "partnership":
+        //return <PartnershipAccount />;
       case "rates-update":
         return <RatesUpdate />;
-      case "business-reports":
-        return <BusinessReports />;
+      //case "business-reports":
+       // return <BusinessReports />;
       case "mill":
         return <MillSection />;
       default:
-        return <DashboardOverview />;
+        return <DailyDataBook />;
     }
   };
 

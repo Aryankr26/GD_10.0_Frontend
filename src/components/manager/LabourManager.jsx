@@ -129,10 +129,10 @@ export function LabourManager() {
      <div className="flex items-center justify-between">
   <div>
     <h2 className="text-gray-900 dark:text-white mb-1 text-xl">
-      Labour Attendance Manager
+      Labour Attendance 
     </h2>
     <p className="text-gray-500 dark:text-gray-400">
-      Mark daily attendance (Present saved, Absent not saved)
+      Mark daily attendance 
     </p>
   </div>
 
@@ -155,7 +155,7 @@ export function LabourManager() {
       }}
     >
       <Calendar className="w-4 h-4 mr-2" />
-      Refresh
+      🔄
     </Button>
   </div>
 </div>

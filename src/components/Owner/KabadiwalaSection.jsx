@@ -1,14 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Card, CardHeader, CardTitle, CardContent, CardDescription
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
 } from "../ui/card";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from "../ui/table";
 import { Button } from "../ui/button";
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import { Calendar as CalendarComponent } from "../ui/calendar";
-import { Calendar, RefreshCcw } from "lucide-react";
+import { Input } from "../ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { RefreshCcw, FileDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/dateFormat";
 
@@ -17,257 +25,262 @@ const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
 const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 
 export function KabadiwalaSection() {
-  const [entries, setEntries] = useState([]);
   const [balances, setBalances] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filterDate, setFilterDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [search, setSearch] = useState("");
+  const [activeVendor, setActiveVendor] = useState(null);
 
-  const [summary, setSummary] = useState({
-    totalWeight: 0,
-    totalAmount: 0,
-    paid: 0,
-    pending: 0,
-  });
+  const [ledger, setLedger] = useState([]);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [outstanding, setOutstanding] = useState(0);
 
-  /* =====================================================
-        FETCH OWNER LIST (SCRAP ITEMS)
-  ===================================================== */
-  const fetchEntries = async () => {
+  /* ===============================
+     LOAD BALANCES (ALL VENDORS)
+  =============================== */
+  const loadBalances = async () => {
     try {
+      setLoading(true);
       const res = await fetch(
-        `${API_URL}/api/kabadiwala/owner-list?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}&date=${filterDate}`
+        `${API_URL}/api/kabadiwala/balances?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}&date=${new Date().toISOString().split("T")[0]}`
       );
-
       const data = await res.json();
-      if (!data.success) throw new Error(data.error);
 
-      const list = data.entries || [];
-      setEntries(list);
-
-      const totalWeight = list.reduce((s, i) => s + Number(i.weight || 0), 0);
-      const totalAmount = list.reduce((s, i) => s + Number(i.amount || 0), 0);
-
-      const paid = list
-        .filter((e) => e.payment_status === "paid")
-        .reduce((s, e) => s + Number(e.amount || 0), 0);
-
-      const pending = totalAmount - paid;
-
-      setSummary({ totalWeight, totalAmount, paid, pending });
-
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load Kabadiwala records");
+      if (data.success) setBalances(data.balances || []);
+      else toast.error(data.error);
+    } catch {
+      toast.error("Server error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* =====================================================
-        FETCH BALANCES (NEW)
-  ===================================================== */
-  const fetchBalances = async () => {
+  /* ===============================
+     LOAD LEDGER (ONE KABADIWALA)
+  =============================== */
+  const loadLedger = async (vendor) => {
     try {
+      setLedgerLoading(true);
+      setActiveVendor(vendor);
+
+      /* 🔁 Build ledger manually from records + payments */
       const res = await fetch(
-        `${API_URL}/api/kabadiwala/balances?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}&date=${filterDate}`
+        `${API_URL}/api/kabadiwala/owner-list?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
+      );
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error("Failed to load ledger");
+        return;
+      }
+
+      // filter this vendor
+      const rows = data.entries.filter(
+        (e) => e.kabadi_name === vendor.vendor_name
       );
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      let running = 0;
 
-      setBalances(data.balances || []);
+      const ledgerRows = rows.map((r) => {
+        running += Number(r.amount);
+        return {
+          date: r.date,
+          type: "purchase",
+          description: `${r.material} (${r.weight}kg × ₹${r.rate})`,
+          amount: r.amount,
+          balance: running,
+        };
+      });
 
-    } catch (err) {
-      toast.error("Failed to load balances");
+      setLedger(ledgerRows);
+      setOutstanding(running);
+
+    } catch {
+      toast.error("Server error");
+    } finally {
+      setLedgerLoading(false);
     }
   };
 
-  /* =====================================================
-        INIT + DATE CHANGE
-  ===================================================== */
   useEffect(() => {
-    fetchEntries();
-    fetchBalances();
-  }, [filterDate]);
+    loadBalances();
+  }, []);
 
-  const handleDateSelect = (date) => {
-    if (!date) return;
-    setSelectedDate(date);
-    setFilterDate(date.toISOString().split("T")[0]);
+  /* ===============================
+     SEARCH
+  =============================== */
+  const filteredVendors = useMemo(() => {
+    return balances.filter((b) =>
+      (b.vendor_name || "").toLowerCase().includes(search.toLowerCase())
+    );
+  }, [balances, search]);
+
+  /* ===============================
+     EXPORT CSV
+  =============================== */
+  const exportCSV = () => {
+    if (!ledger.length || !activeVendor) return;
+
+    const rows = [
+      ["Date", "Type", "Description", "Amount", "Balance"],
+      ...ledger.map((l) => [
+        formatDate(l.date),
+        l.type,
+        l.description.replace(/\n/g, " | "),
+        l.amount,
+        l.balance,
+      ]),
+    ];
+
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${activeVendor.vendor_name}_kabadiwala_ledger.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
-      {/* ===================== HEADER ===================== */}
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-gray-900 dark:text-white mb-1">
-            Kabadiwala Purchases (Owner View)
+            Kabadiwala Ledger (Owner)
           </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Read-only view of all kabadiwala transactions
+            Outstanding & complete transaction history
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Calendar className="w-4 h-4" />
-                {formatDate(filterDate)}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-              />
-            </PopoverContent>
-          </Popover>
+        <Button variant="outline" onClick={loadBalances}>
+          <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+        </Button>
+      </div>
 
-          <Button variant="outline" onClick={() => { fetchEntries(); fetchBalances(); }}>
-            <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
+      {/* SEARCH */}
+      <Input
+        placeholder="Search kabadiwala..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-sm"
+      />
+
+      {/* VENDOR CARDS */}
+      {loading ? (
+        <p className="text-center text-gray-500">Loading...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {filteredVendors.map((v) => (
+            <Card key={v.vendor_id}>
+              <CardHeader>
+                <CardTitle className="text-base">{v.vendor_name}</CardTitle>
+                <CardDescription>Outstanding</CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                <p
+                  className={`text-2xl font-bold ${
+                    v.balance > 0
+                      ? "text-red-600"
+                      : v.balance < 0
+                      ? "text-green-600"
+                      : ""
+                  }`}
+                >
+                  ₹{Number(v.balance).toLocaleString()}
+                </p>
+
+                <Button
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => loadLedger(v)}
+                >
+                  View History
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </div>
+      )}
 
-      {/* ===================== BALANCES ===================== */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Kabadiwala Balance — {formatDate(filterDate)}</CardTitle>
-          <CardDescription>
-            Green = Take Money | Red = Give Money
-          </CardDescription>
-        </CardHeader>
+      {/* ===============================
+         FLOATING LEDGER (MODAL)
+      =============================== */}
+      {activeVendor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-black/40">
 
-        <CardContent>
-          {balances.length === 0 ? (
-            <p className="text-center text-gray-500 py-4">
-              No balance records found
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {balances.map((b) => (
-                <div key={b.vendor_id} className="border p-4 rounded-lg shadow-sm">
-                  <p className="text-sm font-medium">{b.vendor_name}</p>
+          <Card className="w-full max-w-5xl max-h-[85vh] overflow-auto">
+            <CardHeader className="flex flex-row justify-between items-center">
+              <div>
+                <CardTitle>
+                  Ledger — {activeVendor.vendor_name}
+                </CardTitle>
+                <CardDescription>Notebook view</CardDescription>
+              </div>
 
-                  <p
-                    className={`text-xl font-bold mt-1 ${
-                      b.balance > 0 
-                        ? "text-green-600"
-                        : b.balance < 0 
-                        ? "text-red-600"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    ₹{Number(b.balance).toLocaleString()}
-                  </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={exportCSV}>
+                  <FileDown className="w-4 h-4 mr-1" /> Export
+                </Button>
+                <Button variant="ghost" onClick={() => setActiveVendor(null)}>
+                  <X />
+                </Button>
+              </div>
+            </CardHeader>
 
-                  <p className="text-xs text-gray-500">
-                    {b.balance > 0
-                      ? "Take Money"
-                      : b.balance < 0
-                      ? "Give Money"
-                      : "Settled"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ===================== SUMMARY ===================== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader><CardTitle>Total Weight</CardTitle></CardHeader>
-          <CardContent className="text-blue-600 text-2xl font-semibold">
-            {summary.totalWeight} KG
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Total Amount</CardTitle></CardHeader>
-          <CardContent className="text-green-600 text-2xl font-semibold">
-            ₹{summary.totalAmount.toLocaleString()}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Paid</CardTitle></CardHeader>
-          <CardContent className="text-green-700 text-2xl font-semibold">
-            ₹{summary.paid.toLocaleString()}
-          </CardContent>
-        </Card>
-
-       {/* <Card>
-          <CardHeader><CardTitle>Pending</CardTitle></CardHeader>
-          <CardContent className="text-orange-600 text-2xl font-semibold">
-            ₹{summary.pending.toLocaleString()}
-          </CardContent>
-        </Card>*/}
-      </div>
-
-      {/* ===================== SCRAP TABLE ===================== */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Kabadiwala Scrap Items</CardTitle>
-          <CardDescription>Each row = one material entry</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Kabadiwala</TableHead>
-                  <TableHead>Material</TableHead>
-                  <TableHead>Weight</TableHead>
-                  <TableHead>Rate</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {entries.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6">
-                      No records found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  entries.map((e, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{formatDate(e.date)}</TableCell>
-                      <TableCell>{e.kabadi_name}</TableCell>
-                      <TableCell>{e.material}</TableCell>
-                      <TableCell>{e.weight} KG</TableCell>
-                      <TableCell>₹{e.rate}</TableCell>
-                      <TableCell className="font-semibold text-green-600">₹{e.amount}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs ${
-                            e.payment_status === "paid"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-orange-100 text-orange-700"
-                          }`}
-                        >
-                          {e.payment_status.toUpperCase()}
-                        </span>
-                      </TableCell>
+            <CardContent>
+              {ledgerLoading ? (
+                <p className="text-center py-6">Loading...</p>
+              ) : ledger.length === 0 ? (
+                <p className="text-center py-6 text-gray-500">
+                  No transactions
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Balance</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  </TableHeader>
+
+                  <TableBody>
+                    {ledger.map((l, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{formatDate(l.date)}</TableCell>
+                        <TableCell>Maal</TableCell>
+                        <TableCell>
+                          <pre className="whitespace-pre-wrap text-sm">
+                            {l.description}
+                          </pre>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ₹{Number(l.amount).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          ₹{Number(l.balance).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+
+              <div className="mt-4 text-right font-semibold">
+                Final Outstanding: ₹{Number(outstanding).toLocaleString()}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

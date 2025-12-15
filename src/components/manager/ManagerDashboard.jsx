@@ -1,115 +1,167 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Button } from '../ui/button';
+import React, { useState } from "react";
+import { Card, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
 
 import {
-  TruckIcon,
   Receipt,
   Package,
-  Wallet,
-  Users,
   UserSquare,
-  Handshake,
-  LogOut
-} from 'lucide-react';
+  Settings,
+  LogOut,
+  Users,
+  Handshake
+} from "lucide-react";
 
-import { useAuth } from '../../utils/authContext';
-import { TruckDriverManager } from './TruckDriverManager';
-import { ExpenseManager } from './ExpenseManager';
-import { MaalInManager } from './MaalInManager';
-import { RokadiManager } from './RokadiManager';
-import { FeriwalaManager } from './FeriwalaManager';
-import { LabourManager } from './LabourManager';
-import { KabadiwalaManager } from './KabadiwalaManager';
+import { useAuth } from "../../utils/authContext";
+import { ExpenseManager } from "./ExpenseManager";
+import MaalInManager from "./MaalInManager";
+import { LabourManager } from "./LabourManager";
+import { FeriwalaManager } from "./FeriwalaManager";
+import { KabadiwalaManager } from "./KabadiwalaManager";
 
 export function ManagerDashboard() {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState("truck-driver");
+  const [activeTab, setActiveTab] = useState("expenses");
+  const [maalSubTab, setMaalSubTab] = useState("maal-in");
+
+  const SettingsTab = () => (
+    <Card className="m-4">
+      <CardContent className="space-y-4 p-4">
+        <div>
+          <p className="text-sm text-gray-500">Name</p>
+          <p className="font-medium">{user?.name}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Email</p>
+          <p className="font-medium">{user?.email}</p>
+        </div>
+        <Button variant="destructive" onClick={logout} className="w-full">
+          <LogOut className="h-4 w-4 mr-2" /> Logout
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-emerald-600">Manager Dashboard</h2>
-          <p className="text-gray-600">Manage all daily operations</p>
+      {/* ================= MOBILE / APP ONLY ================= */}
+      <div className="md:hidden flex flex-col h-screen">
+
+        {/* 🔷 APP HEADER */}
+        <div className="sticky top-0 z-40 bg-[#4ADE80] border-b px-4 py-3">
+          <h1 className="text-xl font-bold tracking-wide text-emerald-600">
+            Scrap<span className="text-gray-800">Co</span>
+          </h1>
+          <p className="text-xs text-gray-500">
+            Godown Manager
+          </p>
+        </div>
+          
+
+        {/* 🔹 SCROLLABLE CONTENT */}
+        <div className="flex-1 overflow-y-auto pb-20">
+
+          {activeTab === "labour" && <LabourManager />}
+
+          {activeTab === "expenses" && <ExpenseManager />}
+
+          {/* ================= MAAL IN WITH 3 OPTIONS ================= */}
+          {activeTab === "maal-in" && (
+            <div className="space-y-4 p-3">
+
+              {/* MINI TABS */}
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                <Button
+                  size="sm"
+                  variant={maalSubTab === "maal-in" ? "default" : "ghost"}
+                  className="flex-1"
+                  onClick={() => setMaalSubTab("maal-in")}
+                >
+                  <Package className="h-4 w-4 mr-1" />
+                  Maal In
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant={maalSubTab === "feriwala" ? "default" : "ghost"}
+                  className="flex-1"
+                  onClick={() => setMaalSubTab("feriwala")}
+                >
+                  <Users className="h-4 w-4 mr-1" />
+                  Feriwala
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant={maalSubTab === "kabadiwala" ? "default" : "ghost"}
+                  className="flex-1"
+                  onClick={() => setMaalSubTab("kabadiwala")}
+                >
+                  <Handshake className="h-4 w-4 mr-1" />
+                  Kabadiwala
+                </Button>
+              </div>
+
+              {maalSubTab === "maal-in" && <MaalInManager />}
+              {maalSubTab === "feriwala" && <FeriwalaManager />}
+              {maalSubTab === "kabadiwala" && <KabadiwalaManager />}
+            </div>
+          )}
+
+          {activeTab === "settings" && <SettingsTab />}
         </div>
 
-        <Card className="border shadow-sm">
-          <CardContent className="flex items-center gap-4 p-3">
-            <div className="text-right">
-              <p className="font-medium">{user?.name}</p>
-              <p className="text-sm text-gray-500">{user?.email}</p>
-            </div>
-            <Button size="sm" variant="destructive" onClick={logout}>
-              <LogOut className="h-4 w-4 mr-1" /> Logout
-            </Button>
-          </CardContent>
-        </Card>
+        {/* ================= BOTTOM NAV ================= */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+          <div className="flex justify-around py-2">
+
+            <button
+              onClick={() => setActiveTab("labour")}
+              className={`flex flex-col items-center text-xs ${
+                activeTab === "labour" ? "text-emerald-600" : "text-gray-500"
+              }`}
+            >
+              <UserSquare className="h-5 w-5" />
+              Labour
+            </button>
+
+            <button
+              onClick={() => setActiveTab("expenses")}
+              className={`flex flex-col items-center text-xs ${
+                activeTab === "expenses" ? "text-emerald-600" : "text-gray-500"
+              }`}
+            >
+              <Receipt className="h-5 w-5" />
+              Expense
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("maal-in");
+                setMaalSubTab("maal-in");
+              }}
+              className={`flex flex-col items-center text-xs ${
+                activeTab === "maal-in" ? "text-emerald-600" : "text-gray-500"
+              }`}
+            >
+              <Package className="h-5 w-5" />
+              Maal In
+            </button>
+
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`flex flex-col items-center text-xs ${
+                activeTab === "settings" ? "text-emerald-600" : "text-gray-500"
+              }`}
+            >
+              <Settings className="h-5 w-5" />
+              Settings
+            </button>
+
+          </div>
+        </div>
       </div>
-
-      {/* CLEAN HORIZONTAL SCROLL TABS */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-
-        <TabsList
-          className="
-            flex 
-            overflow-x-auto 
-            gap-3 
-            p-2 
-            bg-gray-100 
-            rounded-lg
-            no-scrollbar
-          "
-        >
-          <TabsTrigger value="truck-driver" className="min-w-[110px] flex flex-col items-center gap-1">
-            <TruckIcon className="h-4 w-4" />
-            <span className="text-xs">Truck Driver</span>
-          </TabsTrigger>
-
-          <TabsTrigger value="expenses" className="min-w-[110px] flex flex-col items-center gap-1">
-            <Receipt className="h-4 w-4" />
-            <span className="text-xs">Expenses</span>
-          </TabsTrigger>
-
-          <TabsTrigger value="maal-in" className="min-w-[110px] flex flex-col items-center gap-1">
-            <Package className="h-4 w-4" />
-            <span className="text-xs">Maal In</span>
-          </TabsTrigger>
-
-          <TabsTrigger value="rokadi" className="min-w-[110px] flex flex-col items-center gap-1">
-            <Wallet className="h-4 w-4" />
-            <span className="text-xs">Rokadi</span>
-          </TabsTrigger>
-
-          <TabsTrigger value="feriwala" className="min-w-[110px] flex flex-col items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span className="text-xs">Feriwala</span>
-          </TabsTrigger>
-
-          <TabsTrigger value="labour" className="min-w-[110px] flex flex-col items-center gap-1">
-            <UserSquare className="h-4 w-4" />
-            <span className="text-xs">Labour</span>
-          </TabsTrigger>
-
-          <TabsTrigger value="kabadiwala" className="min-w-[110px] flex flex-col items-center gap-1">
-            <Handshake className="h-4 w-4" />
-            <span className="text-xs">Kabadiwala</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Content */}
-        <TabsContent value="truck-driver"><TruckDriverManager /></TabsContent>
-        <TabsContent value="expenses"><ExpenseManager /></TabsContent>
-        <TabsContent value="maal-in"><MaalInManager /></TabsContent>
-        <TabsContent value="rokadi"><RokadiManager /></TabsContent>
-        <TabsContent value="feriwala"><FeriwalaManager /></TabsContent>
-        <TabsContent value="labour"><LabourManager /></TabsContent>
-        <TabsContent value="kabadiwala"><KabadiwalaManager /></TabsContent>
-
-      </Tabs>
     </div>
   );
 }
