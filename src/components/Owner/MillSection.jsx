@@ -34,7 +34,7 @@ export function MillSection() {
   const [payments, setPayments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   // filterDate can be daily "YYYY-MM-DD" or monthly "YYYY-MM"
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
+  //const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
 
   /* ===========================
       SALE FORM (ADD)
@@ -67,7 +67,8 @@ export function MillSection() {
   ============================ */
   const [editSaleForm, setEditSaleForm] = useState(null); // object or null
   const [editPaymentForm, setEditPaymentForm] = useState(null); // object or null
-
+const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7));
+// This correctly gives "YYYY-MM" (e.g., "2025-12")
   const isMonthString = (s) => /^\d{4}-\d{2}$/.test(s);
 
   const buildQueryForFilter = (baseUrl) => {
@@ -345,51 +346,50 @@ export function MillSection() {
   const pendingPayment = totalInvoiceAmount - totalReceived;
 
   return (
-    <div className="space-y-6">
-      {/* HEADER with Month Picker */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold">Party / Mill Section</h2>
-          <p className="text-gray-500">Owner — Create sales & record payments</p>
-        </div>
+   <div className="space-y-6">
+  {/* HEADER with Month Picker (Monthly Only) */}
+  <div className="flex items-center justify-between">
+    <div>
+      <h2 className="text-xl font-bold">Party / Mill Section</h2>
+      <p className="text-gray-500">Owner — Create sales & record payments</p>
+    </div>
 
-        <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Calendar className="w-4 h-4" />
-                {/* display month if month string, else full date */}
-                {isMonthString(filterDate)
-                  ? new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })
-                  : formatDate(filterDate)}
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="gap-2">
+            <Calendar className="w-4 h-4" />
+            {/* Display the currently selected month name */}
+            {/* filterDate will now always be YYYY-MM (e.g., "2025-12") */}
+            {/* Inside PopoverTrigger Button: */}
+            {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-3 w-56">
+          <div>
+            <Label>Select Month</Label>
+            {/* input type=month is used for selection */}
+            <Input
+              type="month"
+              // Use filterDate directly, as it will always be in YYYY-MM format
+              value={filterDate}
+              onChange={(e) => handleMonthChange(e.target.value)}
+            />
+            
+            <div className="mt-3 flex justify-end">
+              <Button onClick={() => { 
+                // Reset to current month (YYYY-MM)
+                const currentMonth = new Date().toISOString().slice(0, 7);
+                setFilterDate(currentMonth); 
+              }}>
+                Reset to Current Month
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="p-3 w-56">
-              <div>
-                <Label>Pick month</Label>
-                {/* input type=month is simple and reliable */}
-                <Input
-                  type="month"
-                  value={isMonthString(filterDate) ? filterDate : new Date(filterDate).toISOString().slice(0,7)}
-                  onChange={(e) => handleMonthChange(e.target.value)}
-                />
-                <div className="mt-2">
-                  <Label>Or pick exact date</Label>
-                  <Input
-                    type="date"
-                    value={isMonthString(filterDate) ? `${filterDate}-01` : filterDate}
-                    onChange={(e) => handleDateSelect(new Date(e.target.value))}
-                  />
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <Button onClick={() => { setFilterDate(new Date().toISOString().split("T")[0]); setSelectedDate(new Date()); }}>
-                    Reset
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
 
+      
           <Button
             variant="outline"
             onClick={() => {

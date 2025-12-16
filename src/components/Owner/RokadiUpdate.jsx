@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "../ui/table";
 
-
 import {
   Card,
   CardContent,
@@ -36,7 +35,7 @@ import {
   SelectContent,
   SelectItem,
 } from "../ui/select";
-import { RefreshCcw, Wallet, Building2, Plus } from "lucide-react";
+import { RefreshCcw, Wallet, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { formatINR } from "../../utils/currencyFormat";
 import { OwnerReadOnlyBadge } from "./OwnerBadge";
@@ -47,17 +46,20 @@ const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 
 export function RokadiUpdate() {
   const [cashAccounts, setCashAccounts] = useState([]);
-  const [bankAccount, setBankAccount] = useState(null);
+  const [bankAccounts, setBankAccounts] = useState([]);
   const [totalRokadi, setTotalRokadi] = useState(0);
+
+  const [cashHistoryOpen, setCashHistoryOpen] = useState(false);
+const [cashTransactions, setCashTransactions] = useState([]);
+const [cashLoading, setCashLoading] = useState(false);
+
   const [bankHistoryOpen, setBankHistoryOpen] = useState(false);
-const [bankTransactions, setBankTransactions] = useState([]);
-const [bankLoading, setBankLoading] = useState(false);
+  const [bankTransactions, setBankTransactions] = useState([]);
+  const [bankLoading, setBankLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
-  /* ===============================
-     ADD CASH CREDIT STATE
-  =============================== */
+  /* ================= ADD CASH CREDIT ================= */
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState({
     account_id: "",
@@ -66,9 +68,7 @@ const [bankLoading, setBankLoading] = useState(false);
     note: "",
   });
 
-  /* ===============================
-     LOAD ROKADI
-  =============================== */
+  /* ================= LOAD ROKADI ================= */
   const loadRokadi = async () => {
     try {
       setLoading(true);
@@ -80,14 +80,16 @@ const [bankLoading, setBankLoading] = useState(false);
       if (!data.success) throw new Error(data.error);
 
       const accounts = data.accounts || [];
+
       const cash = accounts.filter(a => a.account_type === "cash");
-      const bank = accounts.find(a => a.account_type === "bank") || null;
+      const banks = accounts.filter(a => a.account_type === "bank");
 
       setCashAccounts(cash);
-      setBankAccount(bank);
+      setBankAccounts(banks);
 
       const cashTotal = cash.reduce((s, a) => s + Number(a.balance || 0), 0);
-      const bankTotal = bank ? Number(bank.balance || 0) : 0;
+      const bankTotal = banks.reduce((s, b) => s + Number(b.balance || 0), 0);
+
       setTotalRokadi(cashTotal + bankTotal);
     } catch (err) {
       console.error(err);
@@ -101,9 +103,7 @@ const [bankLoading, setBankLoading] = useState(false);
     loadRokadi();
   }, []);
 
-  /* ===============================
-     ADD CASH CREDIT
-  =============================== */
+  /* ================= ADD CASH ================= */
   const submitAddCash = async () => {
     if (!addForm.account_id || !addForm.amount) {
       toast.error("Select account & amount");
@@ -118,7 +118,7 @@ const [bankLoading, setBankLoading] = useState(false);
           company_id: COMPANY_ID,
           godown_id: GODOWN_ID,
           account_id: addForm.account_id,
-          type: "credit", // ✅ CREDIT ONLY
+          type: "credit",
           amount: Number(addForm.amount),
           category: "manual_cash",
           reference: addForm.note,
@@ -144,35 +144,85 @@ const [bankLoading, setBankLoading] = useState(false);
     }
   };
 
-  const loadBankHistory = async () => {
+const loadCashHistory = async () => {
   try {
-    setBankLoading(true);
+    setCashLoading(true);
     const res = await fetch(
-      `${API_URL}/api/rokadi/history/bank?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
+      `${API_URL}/api/rokadi/history/cash?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
     );
     const data = await res.json();
 
     if (!data.success) throw new Error(data.error);
-    setBankTransactions(data.transactions || []);
+    setCashTransactions(data.transactions || []);
   } catch (err) {
     console.error(err);
-    toast.error("Failed to load bank history");
+    toast.error("Failed to load cash history");
   } finally {
-    setBankLoading(false);
+    setCashLoading(false);
   }
 };
 
 
+  /* ================= BANK HISTORY ================= */
+  const loadBankHistory = async () => {
+    try {
+      setBankLoading(true);
+      const res = await fetch(
+        `${API_URL}/api/rokadi/history/bank?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
+      );
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      setBankTransactions(data.transactions || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load bank history");
+    } finally {
+      setBankLoading(false);
+    }
+  };
+
+  // ================= EXPORT TO CSV (COMMON) =================
+const exportToCSV = (rows, filename) => {
+  if (!rows || rows.length === 0) {
+    toast.error("No data to export");
+    return;
+  }
+
+  const headers = ["Date", "Account", "Particulars", "Debit", "Credit"];
+
+  const csvRows = [
+    headers.join(","), // header row
+    ...rows.map(r =>
+      [
+        new Date(r.date).toLocaleDateString(),
+        r.account_name || "",
+        `"${(r.reference || r.category || "").replace(/"/g, '""')}"`,
+        r.type === "debit" ? r.amount : "",
+        r.type === "credit" ? r.amount : "",
+      ].join(",")
+    ),
+  ];
+
+  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  window.URL.revokeObjectURL(url);
+};
+
   return (
     <div className="space-y-6">
 
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-gray-900 mb-1">Rokadi Update</h2>
           <p className="text-gray-500">Cash & bank position</p>
         </div>
-
         <div className="flex gap-2">
           <OwnerReadOnlyBadge />
           <Button variant="outline" onClick={loadRokadi}>
@@ -182,13 +232,11 @@ const [bankLoading, setBankLoading] = useState(false);
         </div>
       </div>
 
-      {/* ================= TOTAL ================= */}
+      {/* TOTAL */}
       <Card className="border-2 border-green-200 bg-green-50">
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
-            <CardTitle className="text-green-700">
-              Total Rokadi
-            </CardTitle>
+            <CardTitle className="text-green-700">Total Rokadi</CardTitle>
             <CardDescription>Cash + Bank</CardDescription>
           </div>
           <Wallet className="w-8 h-8 text-green-700" />
@@ -200,13 +248,75 @@ const [bankLoading, setBankLoading] = useState(false);
         </CardContent>
       </Card>
 
-      {/* ================= CASH ================= */}
-      <Card>
+      {/* CASH */}
+     <Card>
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
             <CardTitle>Cash in Hand</CardTitle>
             <CardDescription>Manual credit only</CardDescription>
           </div>
+
+          <div className="flex gap-2">
+            {cashAccounts.length > 0 && (
+              <Dialog
+                open={cashHistoryOpen}
+                onOpenChange={(v) => {
+                  setCashHistoryOpen(v);
+                  if (v) loadCashHistory();
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">History</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader className="flex flex-row items-center justify-between">
+  <DialogTitle>Cash History</DialogTitle>
+
+  <Button
+    size="sm"
+    variant="outline"
+    onClick={() =>
+      exportToCSV(
+        cashTransactions,
+        `Cash_History_${new Date().toISOString().slice(0,10)}.csv`
+      )
+    }
+  >
+    Export
+  </Button>
+</DialogHeader>
+
+                  {cashLoading ? (
+                    <p className="text-center py-6">Loading…</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Particulars</TableHead>
+                          <TableHead className="text-right">Debit</TableHead>
+                          <TableHead className="text-right">Credit</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cashTransactions.map(t => (
+                          <TableRow key={t.id}>
+                            <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
+                            <TableCell>{t.reference || t.category}</TableCell>
+                            <TableCell className="text-right text-red-600">
+                              {t.type === "debit" ? formatINR(t.amount) : "-"}
+                            </TableCell>
+                            <TableCell className="text-right text-green-600">
+                              {t.type === "credit" ? formatINR(t.amount) : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </DialogContent>
+              </Dialog>
+            )}
 
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
@@ -268,7 +378,6 @@ const [bankLoading, setBankLoading] = useState(false);
                 <div>
                   <Label>Note</Label>
                   <Input
-                    placeholder="Optional note"
                     value={addForm.note}
                     onChange={(e) =>
                       setAddForm({ ...addForm, note: e.target.value })
@@ -285,16 +394,15 @@ const [bankLoading, setBankLoading] = useState(false);
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </CardHeader>
 
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {cashAccounts.map((a) => (
+            {cashAccounts.map(a => (
               <Card key={a.id}>
                 <CardHeader>
-                  <CardTitle className="text-sm">
-                    {a.account_name}
-                  </CardTitle>
+                  <CardTitle className="text-sm">{a.account_name}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-semibold">
@@ -307,90 +415,106 @@ const [bankLoading, setBankLoading] = useState(false);
         </CardContent>
       </Card>
 
-      {/* ================= BANK ================= */}
-     <Card>
-  <CardHeader className="flex flex-row justify-between items-center">
-    <CardTitle>Bank</CardTitle>
+      {/* BANK */}
+      <Card>
+        <CardHeader className="flex flex-row justify-between items-center">
+          <CardTitle>Bank</CardTitle>
 
-    {bankAccount && (
-      <Dialog
-        open={bankHistoryOpen}
-        onOpenChange={(v) => {
-          setBankHistoryOpen(v);
-          if (v) loadBankHistory();
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            History
-          </Button>
-        </DialogTrigger>
+          {bankAccounts.length > 0 && (
+            <Dialog
+              open={bankHistoryOpen}
+              onOpenChange={(v) => {
+                setBankHistoryOpen(v);
+                if (v) loadBankHistory();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">History</Button>
+              </DialogTrigger>
 
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Bank Statement</DialogTitle>
-          </DialogHeader>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader className="flex flex-row items-center justify-between">
+  <DialogTitle>Bank Statement</DialogTitle>
 
-          {bankLoading ? (
-            <p className="text-center py-6">Loading…</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Particulars</TableHead>
-                  <TableHead className="text-right">Debit</TableHead>
-                  <TableHead className="text-right">Credit</TableHead>
-                </TableRow>
-              </TableHeader>
+  <Button
+    size="sm"
+    variant="outline"
+    onClick={() =>
+      exportToCSV(
+        bankTransactions,
+        `Bank_History_${new Date().toISOString().slice(0,10)}.csv`
+      )
+    }
+  >
+    Export
+  </Button>
+</DialogHeader>
 
-              <TableBody>
-                {bankTransactions.length > 0 ? (
-                  bankTransactions.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>
-                        {new Date(t.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>{t.reference || t.category}</TableCell>
-                      <TableCell className="text-right text-red-600">
-                        {t.type === "debit" ? formatINR(t.amount) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {t.type === "credit" ? formatINR(t.amount) : "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))
+
+                {bankLoading ? (
+                  <p className="text-center py-6">Loading…</p>
                 ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">
-                      No transactions
-                    </TableCell>
-                  </TableRow>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Particulars</TableHead>
+                        <TableHead className="text-right">Debit</TableHead>
+                        <TableHead className="text-right">Credit</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bankTransactions.length > 0 ? (
+                        bankTransactions.map(t => (
+                          <TableRow key={t.id}>
+                            <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
+                            <TableCell>{t.reference || t.category}</TableCell>
+                            <TableCell className="text-right text-red-600">
+                              {t.type === "debit" ? formatINR(t.amount) : "-"}
+                            </TableCell>
+                            <TableCell className="text-right text-green-600">
+                              {t.type === "credit" ? formatINR(t.amount) : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-6">
+                            No transactions
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 )}
-              </TableBody>
-            </Table>
+              </DialogContent>
+            </Dialog>
           )}
-        </DialogContent>
-      </Dialog>
-    )}
-  </CardHeader>
+        </CardHeader>
 
-  <CardContent>
-    {!bankAccount ? (
-      <p className="text-gray-500">No bank account</p>
-    ) : (
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-medium">{bankAccount.account_name}</p>
-          <p className="text-sm text-gray-500">Single bank</p>
-        </div>
-        <div className="text-xl font-semibold text-purple-600">
-          {formatINR(bankAccount.balance)}
-        </div>
-      </div>
-    )}
-  </CardContent>
-</Card>
+        <CardContent>
+          {bankAccounts.length === 0 ? (
+            <p className="text-gray-500">No bank accounts</p>
+          ) : (
+            bankAccounts.map(b => (
+              <div
+                key={b.id}
+                className="flex items-center justify-between border-b py-2"
+              >
+                <div>
+                  <p className="font-medium">{b.account_name}</p>
+                  <p className="text-sm text-gray-500">
+                    {b.account_number || "—"}
+                  </p>
+                </div>
+                <div className="text-xl font-semibold text-purple-600">
+                  {formatINR(b.balance)}
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       {loading && (
         <p className="text-center text-gray-500">Updating…</p>
@@ -398,7 +522,5 @@ const [bankLoading, setBankLoading] = useState(false);
     </div>
   );
 }
-
-
 
 export default RokadiUpdate;

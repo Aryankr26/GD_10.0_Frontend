@@ -20,9 +20,15 @@ import { RefreshCcw, FileDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/dateFormat";
 
-const API_URL = "https://gd-10-0-backend-1.onrender.com";
+/* ================= CONFIG ================= */
+const API_URL =
+  process.env.REACT_APP_API_URL ||
+  "https://gd-10-0-backend-1.onrender.com";
+
 const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
 const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
+
+/* ========================================================= */
 
 export function KabadiwalaSection() {
   const [balances, setBalances] = useState([]);
@@ -35,19 +41,19 @@ export function KabadiwalaSection() {
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [outstanding, setOutstanding] = useState(0);
 
-  /* ===============================
-     LOAD BALANCES (ALL VENDORS)
-  =============================== */
+  /* ================= LOAD BALANCES ================= */
   const loadBalances = async () => {
     try {
       setLoading(true);
       const res = await fetch(
-        `${API_URL}/api/kabadiwala/balances?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}&date=${new Date().toISOString().split("T")[0]}`
+        `${API_URL}/api/kabadiwala/balances?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}&date=${new Date()
+          .toISOString()
+          .split("T")[0]}`
       );
-      const data = await res.json();
 
+      const data = await res.json();
       if (data.success) setBalances(data.balances || []);
-      else toast.error(data.error);
+      else toast.error(data.error || "Failed to load balances");
     } catch {
       toast.error("Server error");
     } finally {
@@ -55,26 +61,22 @@ export function KabadiwalaSection() {
     }
   };
 
-  /* ===============================
-     LOAD LEDGER (ONE KABADIWALA)
-  =============================== */
+  /* ================= LOAD LEDGER ================= */
   const loadLedger = async (vendor) => {
     try {
       setLedgerLoading(true);
       setActiveVendor(vendor);
 
-      /* 🔁 Build ledger manually from records + payments */
       const res = await fetch(
         `${API_URL}/api/kabadiwala/owner-list?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
       );
-      const data = await res.json();
 
+      const data = await res.json();
       if (!data.success) {
         toast.error("Failed to load ledger");
         return;
       }
 
-      // filter this vendor
       const rows = data.entries.filter(
         (e) => e.kabadi_name === vendor.vendor_name
       );
@@ -82,19 +84,21 @@ export function KabadiwalaSection() {
       let running = 0;
 
       const ledgerRows = rows.map((r) => {
-        running += Number(r.amount);
+        // PURCHASE → kabadiwala owes → +
+        const amt = Number(r.amount);
+        running += amt;
+
         return {
           date: r.date,
-          type: "purchase",
+          type: "Purchase",
           description: `${r.material} (${r.weight}kg × ₹${r.rate})`,
-          amount: r.amount,
+          amount: amt,
           balance: running,
         };
       });
 
       setLedger(ledgerRows);
       setOutstanding(running);
-
     } catch {
       toast.error("Server error");
     } finally {
@@ -106,18 +110,14 @@ export function KabadiwalaSection() {
     loadBalances();
   }, []);
 
-  /* ===============================
-     SEARCH
-  =============================== */
+  /* ================= SEARCH ================= */
   const filteredVendors = useMemo(() => {
     return balances.filter((b) =>
       (b.vendor_name || "").toLowerCase().includes(search.toLowerCase())
     );
   }, [balances, search]);
 
-  /* ===============================
-     EXPORT CSV
-  =============================== */
+  /* ================= EXPORT CSV ================= */
   const exportCSV = () => {
     if (!ledger.length || !activeVendor) return;
 
@@ -145,7 +145,6 @@ export function KabadiwalaSection() {
 
   return (
     <div className="space-y-6">
-
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
@@ -153,7 +152,7 @@ export function KabadiwalaSection() {
             Kabadiwala Ledger (Owner)
           </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Outstanding & complete transaction history
+            Outstanding & transaction history
           </p>
         </div>
 
@@ -170,7 +169,7 @@ export function KabadiwalaSection() {
         className="max-w-sm"
       />
 
-      {/* VENDOR CARDS */}
+      {/* VENDORS */}
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
       ) : (
@@ -208,19 +207,16 @@ export function KabadiwalaSection() {
         </div>
       )}
 
-      {/* ===============================
-         FLOATING LEDGER (MODAL)
-      =============================== */}
+      {/* LEDGER MODAL */}
       {activeVendor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-black/40">
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur bg-black/40">
           <Card className="w-full max-w-5xl max-h-[85vh] overflow-auto">
             <CardHeader className="flex flex-row justify-between items-center">
               <div>
                 <CardTitle>
                   Ledger — {activeVendor.vendor_name}
                 </CardTitle>
-                <CardDescription>Notebook view</CardDescription>
+                <CardDescription>Chronological view</CardDescription>
               </div>
 
               <div className="flex gap-2">
@@ -256,17 +252,17 @@ export function KabadiwalaSection() {
                     {ledger.map((l, i) => (
                       <TableRow key={i}>
                         <TableCell>{formatDate(l.date)}</TableCell>
-                        <TableCell>Maal</TableCell>
+                        <TableCell>{l.type}</TableCell>
                         <TableCell>
                           <pre className="whitespace-pre-wrap text-sm">
                             {l.description}
                           </pre>
                         </TableCell>
                         <TableCell className="text-right">
-                          ₹{Number(l.amount).toLocaleString()}
+                          ₹{l.amount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          ₹{Number(l.balance).toLocaleString()}
+                          ₹{l.balance.toLocaleString()}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -275,7 +271,7 @@ export function KabadiwalaSection() {
               )}
 
               <div className="mt-4 text-right font-semibold">
-                Final Outstanding: ₹{Number(outstanding).toLocaleString()}
+                Final Outstanding: ₹{outstanding.toLocaleString()}
               </div>
             </CardContent>
           </Card>

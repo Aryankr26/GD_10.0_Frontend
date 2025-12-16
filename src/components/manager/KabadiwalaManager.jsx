@@ -288,7 +288,7 @@ export function KabadiwalaManager() {
   return (
     <div className="space-y-6">
 
-      {/* BALANCE CARD */}
+      {/* BALANCE CARD 
       <Card>
         <CardHeader>
           <CardTitle>Kabadiwala Daily Balance</CardTitle>
@@ -343,7 +343,7 @@ export function KabadiwalaManager() {
           </div>
         </CardContent>
       </Card>
-
+*/}
    {/* PURCHASE FORM (Same as Feriwala but for Kabadiwala) */}
 <Card>
   <CardHeader>
@@ -517,20 +517,20 @@ export function KabadiwalaManager() {
       <Card>
         <CardHeader>
           <CardTitle>Record Payment</CardTitle>
-          <CardDescription>Money given to Kabadiwala</CardDescription>
+          <CardDescription>Money paid to Kabadiwala</CardDescription>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={submitPayment} className="grid grid-cols-1 md:grid-cols-4 gap-3">
 
             <div>
-              <Label>Vendor</Label>
+              <Label></Label>
               <select
                 className="border p-2 rounded w-full"
                 value={payForm.vendor_id}
                 onChange={(e) => setPayForm(prev => ({ ...prev, vendor_id: e.target.value }))}
               >
-                <option value="">-- select --</option>
+                <option value="">-- Select Kabadiwala--</option>
                 {vendors.map(v => (
                   <option key={v.vendor_id} value={v.vendor_id}>{v.vendor_name}</option>
                 ))}
@@ -538,7 +538,7 @@ export function KabadiwalaManager() {
             </div>
 
             <div>
-              <Label>Date</Label>
+              <Label></Label>
               <Input
                 type="date"
                 value={payForm.date}
@@ -547,18 +547,22 @@ export function KabadiwalaManager() {
             </div>
 
             <div>
-              <Label>Amount</Label>
+              <Label></Label>
               <Input
                 type="number"
+                 placeholder="Amount"
                 value={payForm.amount}
                 onChange={(e) => setPayForm(prev => ({ ...prev, amount: e.target.value }))}
               />
             </div>
 
+          
             <div>
-              <Label>Note</Label>
+              <Label></Label>
               <Input
+               placeholder="Note"
                 value={payForm.note}
+
                 onChange={(e) => setPayForm(prev => ({ ...prev, note: e.target.value }))}
               />
             </div>

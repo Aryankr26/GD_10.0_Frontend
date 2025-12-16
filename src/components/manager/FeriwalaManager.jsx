@@ -217,57 +217,7 @@ export function FeriwalaManager() {
   return (
     <div className="space-y-8">
 
-      {/* WITHDRAWAL FORM */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Record Withdrawal</CardTitle>
-          <CardDescription>Feriwala takes money from godown</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <form className="space-y-4" onSubmit={submitWithdrawal}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <select
-                className="border p-2 rounded"
-                value={withdrawForm.vendor_id}
-                required
-                onChange={(e) => handleWithdrawChange("vendor_id", e.target.value)}
-              >
-                <option value="">-- Select Feriwala --</option>
-                {vendors.map((v) => (
-                  <option key={v.vendor_id} value={v.vendor_id}>
-                    {v.vendor_name}
-                  </option>
-                ))}
-              </select>
-
-              <Input
-                type="date"
-                value={withdrawForm.date}
-                onChange={(e) => handleWithdrawChange("date", e.target.value)}
-              />
-
-              <Input
-                type="number"
-                placeholder="Amount"
-                value={withdrawForm.amount}
-                onChange={(e) => handleWithdrawChange("amount", e.target.value)}
-              />
-
-              <Input
-                placeholder="Note (optional)"
-                value={withdrawForm.note}
-                onChange={(e) => handleWithdrawChange("note", e.target.value)}
-              />
-            </div>
-
-            <Button type="submit" className="mt-2">
-              <IndianRupee /> &nbsp; Record Withdrawal
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
+     
       {/* PURCHASE FORM */}
       <Card>
         <CardHeader>
@@ -361,6 +311,57 @@ export function FeriwalaManager() {
           )}
         </CardContent>
       </Card>
+       {/* WITHDRAWAL FORM */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Record Withdrawal</CardTitle>
+          <CardDescription>Feriwala takes money from godown</CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <form className="space-y-4" onSubmit={submitWithdrawal}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <select
+                className="border p-2 rounded"
+                value={withdrawForm.vendor_id}
+                required
+                onChange={(e) => handleWithdrawChange("vendor_id", e.target.value)}
+              >
+                <option value="">-- Select Feriwala --</option>
+                {vendors.map((v) => (
+                  <option key={v.vendor_id} value={v.vendor_id}>
+                    {v.vendor_name}
+                  </option>
+                ))}
+              </select>
+
+              <Input
+                type="date"
+                value={withdrawForm.date}
+                onChange={(e) => handleWithdrawChange("date", e.target.value)}
+              />
+
+              <Input
+                type="number"
+                placeholder="Amount"
+                value={withdrawForm.amount}
+                onChange={(e) => handleWithdrawChange("amount", e.target.value)}
+              />
+
+              <Input
+                placeholder="Note (optional)"
+                value={withdrawForm.note}
+                onChange={(e) => handleWithdrawChange("note", e.target.value)}
+              />
+            </div>
+
+            <Button type="submit" className="mt-2">
+              <IndianRupee /> &nbsp; Record Withdrawal
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

@@ -81,7 +81,7 @@ export default function DashboardOverview() {
       {/* ================= DASHBOARD ================= */}
       {!loading && data && (
         <>
-          {/* TOP METRICS */}
+          {/* ================= TOP METRICS ================= */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
             {/* SCRAP IN */}
@@ -143,7 +143,50 @@ export default function DashboardOverview() {
             </Card>
           </div>
 
-          {/* SCRAP BY MATERIAL */}
+          {/* ================= EXPENSE ANALYTICS ================= */}
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle>Monthly Expense Summary</CardTitle>
+              <span className="text-sm text-gray-500">
+                Current Month
+              </span>
+            </CardHeader>
+
+            <CardContent>
+              {(!data.expense_summary || data.expense_summary.length === 0) ? (
+                <p className="text-sm text-gray-500">
+                  No expenses recorded this month
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {data.expense_summary.map((e) => (
+                    <div
+                      key={e.category}
+                      className="flex items-center justify-between border-b pb-2"
+                    >
+                      <div>
+                        <p className="font-medium">{e.category}</p>
+                        <p className="text-xs text-gray-500">
+                          {e.payments} payments
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-semibold text-red-600">
+                          {formatINR(e.total)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Spent
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ================= SCRAP BY MATERIAL ================= */}
           <Card>
             <CardHeader>
               <CardTitle>Scrap In by Category (Today)</CardTitle>

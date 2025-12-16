@@ -1,130 +1,220 @@
-// src/components/Owner/OwnersDashboard.jsx
 import { useState } from "react";
 import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "../ui/dropdown-menu";
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "../ui/tabs";
 
-/* IMPORTS: same folder (adjust paths if your files are in a different folder) */
-import DashboardOverview  from "./DashboardOverview";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Package,
+  Users,
+  Factory,
+  Settings,
+  LogOut,
+} from "lucide-react";
+
+import { useAuth } from "../../utils/authContext";
+
+/* SECTIONS */
+import DashboardOverview from "./DashboardOverview";
 import { DailyDataBook } from "./DailyDataBook";
 import { RokadiUpdate } from "./RokadiUpdate";
-//import { BankAccount } from "./BankAccount";
+import MaalIn from "./MaalIn";
 import { FeriwalaSection } from "./FeriwalaSection";
-import { LabourSection } from "./LabourSection";
 import KabadiwalaSection from "./KabadiwalaSection";
-//import { PartnershipAccount } from "./PartnershipAccount";
-//import { BusinessReports } from "./BusinessReports";
+import { LabourSection } from "./LabourSection";
 import { MillSection } from "./MillSection";
 import RatesUpdate from "./RatesUpdate";
-//import TruckDriver from "./TruckDriver";
-import MaalIn from "./MaalIn";
 
-/* menu items */
-const menuItems = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "daily-book", label: "Daily Data Book" },
-  { id: "rokadi", label: "Rokadi Update" },
-  //{ id: "bank", label: "Bank Account" },
-  { id: "labour", label: "Labour" },
-  { id: "feriwala", label: "Feriwala" },
-  //{ id: "truck-driver", label: "Truck Driver" },
-  { id: "maal-in", label: "Maal In" },
-  { id: "kabadiwala", label: "Kabadiwala" },
- // { id: "partnership", label: "Partnership" },
-  { id: "rates-update", label: "Rates Update" },
- // { id: "business-reports", label: "Business Reports" },
-  { id: "mill", label: "Party / Mill" },
-];
+/* Bottom Nav Button */
+function NavBtn({ active, onClick, icon, label, highlight }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center transition-all ${
+        active ? "text-emerald-600 font-semibold" : "text-gray-500"
+      } ${highlight ? "scale-110" : ""}`}
+    >
+      {icon}
+      <span className="text-xs mt-0.5">{label}</span>
+    </button>
+  );
+}
 
-export function OwnersDashboard(props) {
-  // props: activeSection (optional), setActiveSection (optional)
-  const { activeSection: activeFromProps = "daily-book", setActiveSection } = props;
+export function OwnersDashboard() {
+  const { user, logout } = useAuth();
 
-  // If parent didn't provide a state setter, manage local state
-  const [localActive, setLocalActive] = useState(activeFromProps);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
-  // whichever is "authoritative"
-  const currentActive = typeof setActiveSection === "function" ? activeFromProps : localActive;
-
-  // helper to change section safely
-  const setSection = (id) => {
-    if (typeof setActiveSection === "function") {
-      try { 
-        setActiveSection(id);
-      } catch (e) {
-        // fallback to local state on error
-        // eslint-disable-next-line no-console
-        console.warn("setActiveSection threw:", e);
-        setLocalActive(id);
-      }
-    } else {
-      setLocalActive(id);
-    }
-  };
-
-  const renderOwnerSection = () => {
-    switch (currentActive) {
-      case "dashboard":
-        return <DashboardOverview />;
-      case "daily-book":
-        return <DailyDataBook />;
-      case "maal-in":
-        return <MaalIn />;
-     // case "truck-driver":
-        //return <TruckDriver />;
-      case "rokadi":
-        return <RokadiUpdate />;
-      //case "bank":
-        //return <BankAccount />;
-      case "labour":
-        return <LabourSection />;
-      case "feriwala":
-        return <FeriwalaSection />;
-      case "kabadiwala":
-        return <KabadiwalaSection />;
-      //case "partnership":
-        //return <PartnershipAccount />;
-      case "rates-update":
-        return <RatesUpdate />;
-      //case "business-reports":
-       // return <BusinessReports />;
-      case "mill":
-        return <MillSection />;
-      default:
-        return <DailyDataBook />;
-    }
-  };
+  /* merged sub-tabs */
+  const [maalTab, setMaalTab] = useState("maalin");
+  const [dailyTab, setDailyTab] = useState("daily");
+  const [millTab, setMillTab] = useState("mill");
 
   return (
-    <div className="pt-24 p-4 w-full">
-      {/* Open Menu button (dropdown) */}
-      <div className="mb-6 flex justify-start">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-green-600 text-white px-4 py-2">Open Menu</Button>
-          </DropdownMenuTrigger>
+   <div className="min-h-screen bg-gray-50 flex flex-col">
+  {/* ================= HEADER ================= */}
+  <div className="sticky top-0 z-40 bg-white px-4 py-4 flex justify-between items-center shadow-sm">
+    <div>
+     <h1 className="text-xl font-bold tracking-wide text-emerald-600">
+            Scrap<span className="text-gray-800">Co</span>
+          </h1>
+      <p className="text-xs text-gray-600 mt-1 font-medium">
+        Owner Dashboard
+      </p>
+    </div>
 
-          <DropdownMenuContent className="w-60" side="bottom">
-            {menuItems.map((item) => (
-              <DropdownMenuItem
-                key={item.id}
-                onClick={() => setSection(item.id)}
-                className="cursor-pointer"
-                role="menuitem"
-              >
-                {item.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="text-black hover:bg-white/20"
+          onClick={() => setActiveTab("settings")}
+        >
+          <Settings />
+        </Button>
       </div>
 
-      {/* render the selected section */}
-      <div>{renderOwnerSection()}</div>
+      {/* ================= CONTENT ================= */}
+      <div className="flex-1 overflow-y-auto pb-24 p-4">
+
+        {/* DASHBOARD */}
+        {activeTab === "dashboard" && <DashboardOverview />}
+
+        {/* DAILY BOOK + ROKADI */}
+        {activeTab === "daily" && (
+          <>
+            <Tabs
+              value={dailyTab}
+              onValueChange={setDailyTab}
+              className="mb-4"
+            >
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="rokadi">Rokadi</TabsTrigger>
+                <TabsTrigger value="daily">Daily Book</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {dailyTab === "daily" && <DailyDataBook />}
+            {dailyTab === "rokadi" && <RokadiUpdate />}
+          </>
+        )}
+
+        {/* MAAL + FERIWALA + KABADIWALA */}
+        {activeTab === "maal" && (
+          <>
+            <Tabs
+              value={maalTab}
+              onValueChange={setMaalTab}
+              className="mb-4"
+            >
+              <TabsList className="grid grid-cols-3 w-full">
+                <TabsTrigger value="maalin">Maal In</TabsTrigger>
+                <TabsTrigger value="feriwala">Feriwala</TabsTrigger>
+                <TabsTrigger value="kabadiwala">Kabadiwala</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {maalTab === "maalin" && <MaalIn />}
+            {maalTab === "feriwala" && <FeriwalaSection />}
+            {maalTab === "kabadiwala" && <KabadiwalaSection />}
+          </>
+        )}
+
+        {/* LABOUR */}
+        {activeTab === "labour" && <LabourSection />}
+
+        {/* MILL + RATES */}
+        {activeTab === "mill" && (
+          <>
+            <Tabs
+              value={millTab}
+              onValueChange={setMillTab}
+              className="mb-4"
+            >
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="mill">Party / Mill</TabsTrigger>
+                <TabsTrigger value="rates">Rates</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {millTab === "mill" && <MillSection />}
+            {millTab === "rates" && <RatesUpdate />}
+          </>
+        )}
+
+        {/* SETTINGS */}
+        {activeTab === "settings" && (
+          <Card>
+            <CardContent className="space-y-4 p-4">
+              <div>
+                <p className="text-sm text-gray-500">Name</p>
+                <p className="font-semibold">{user?.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="font-semibold">{user?.email}</p>
+              </div>
+
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={logout}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* ================= BOTTOM NAV (MOBILE STYLE) ================= */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md">
+        <div className="flex justify-around py-2">
+
+          <NavBtn
+            active={activeTab === "labour"}
+            onClick={() => setActiveTab("labour")}
+            icon={<Users className="h-5 w-5" />}
+            label="Labour"
+          />
+
+          <NavBtn
+            active={activeTab === "maal"}
+            onClick={() => setActiveTab("maal")}
+            icon={<Package className="h-5 w-5" />}
+            label="Maal"
+          />
+
+          {/* CENTER DASHBOARD */}
+          <NavBtn
+            active={activeTab === "dashboard"}
+            onClick={() => setActiveTab("dashboard")}
+            icon={<LayoutDashboard className="h-6 w-6" />}
+            label="Dashboard"
+            highlight
+          />
+
+          <NavBtn
+            active={activeTab === "daily"}
+            onClick={() => setActiveTab("daily")}
+            icon={<BookOpen className="h-5 w-5" />}
+            label="Daily"
+          />
+
+          <NavBtn
+            active={activeTab === "mill"}
+            onClick={() => setActiveTab("mill")}
+            icon={<Factory className="h-5 w-5" />}
+            label="Mills"
+          />
+
+        </div>
+      </div>
     </div>
   );
 }
