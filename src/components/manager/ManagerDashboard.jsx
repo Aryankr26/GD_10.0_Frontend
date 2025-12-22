@@ -43,10 +43,7 @@ export function ManagerDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      {/* ================= MOBILE / APP ONLY ================= */}
-      <div className="md:hidden flex flex-col h-[100dvh]">
+    <div className="min-h-[100dvh] bg-gray-50 md:hidden flex flex-col overflow-x-hidden">
 
         {/* 🔷 APP HEADER */}
         <div className="sticky top-0 z-40 bg-[#4ADE80] border-b px-4 py-3">
@@ -60,7 +57,7 @@ export function ManagerDashboard() {
           
 
         {/* 🔹 SCROLLABLE CONTENT */}
-        <div className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <div className="flex-1 app-content-safe-bottom">
 
           {activeTab === "labour" && <LabourManager />}
 
@@ -113,7 +110,7 @@ export function ManagerDashboard() {
         </div>
 
         {/* ================= BOTTOM NAV ================= */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-white border-t pb-[env(safe-area-inset-bottom)]">
+        <div className="app-bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-white border-t">
           <div className="h-full flex items-center justify-around px-2">
 
             <button
@@ -161,7 +158,6 @@ export function ManagerDashboard() {
 
           </div>
         </div>
-      </div>
     </div>
   );
 }

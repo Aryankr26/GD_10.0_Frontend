@@ -83,7 +83,7 @@ export function OwnersDashboard() {
         - Keep ONLY one vertical scroll (the page/body).
         - Add safe bottom padding so fixed bottom-nav never overlaps content.
       */}
-      <div className="flex-1 p-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="flex-1 p-4 app-content-safe-bottom">
 
         {/* DASHBOARD */}
         {activeTab === "dashboard" && <DashboardOverview />}
@@ -177,7 +177,7 @@ export function OwnersDashboard() {
       </div>
 
       {/* ================= BOTTOM NAV (MOBILE STYLE) ================= */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-white border-t shadow-md pb-[env(safe-area-inset-bottom)]">
+      <div className="app-bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-white border-t shadow-md">
         <div className="h-full flex items-center justify-around px-2">
 
           <NavBtn

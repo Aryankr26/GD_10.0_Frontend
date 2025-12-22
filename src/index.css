@@ -4619,3 +4619,98 @@ html,
 body {
   overflow-x: hidden;
 }
+
+/*
+  History modal (UI-only):
+  This project ships with a prebuilt Tailwind CSS output, so newly added
+  arbitrary-value utilities (e.g. w-[min(...)]) may not exist.
+  These classes ensure consistent centered sizing + scroll behavior.
+*/
+.history-modal-overlay {
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.history-modal-content {
+  z-index: 1001;
+  width: min(var(--history-modal-w, 560px), calc(100vw - 2rem));
+  height: min(var(--history-modal-h, 520px), 70dvh);
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* App-wide fixed bottom-nav safety */
+:root {
+  --app-bottom-nav-h: 4rem; /* 64px */
+}
+
+.app-content-safe-bottom {
+  padding-bottom: calc(var(--app-bottom-nav-h) + env(safe-area-inset-bottom));
+}
+
+.app-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: var(--app-bottom-nav-h);
+}
+
+/* Dialog standardization (Radix Dialog + shadcn/ui) */
+.app-dialog-overlay {
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.app-dialog-content {
+  z-index: 1001;
+  max-height: 90dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-dialog-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+/* Popovers (calendar/date pickers) must always be above dialogs */
+.app-popover-content {
+  z-index: 1102;
+}
+
+/* Tables: on mobile, allow wrapping to avoid hidden text */
+@media (max-width: 640px) {
+  [data-slot="table-head"],
+  [data-slot="table-cell"] {
+    white-space: normal !important;
+    word-break: break-word;
+  }
+}
+
+@supports not (height: 1dvh) {
+  .app-dialog-content {
+    max-height: 90vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .history-modal-content {
+    max-width: 24rem; /* ~max-w-sm */
+  }
+}
+
+@media (min-width: 641px) {
+  .history-modal-content {
+    max-width: 28rem; /* ~max-w-md */
+  }
+}
+
+@supports not (height: 1dvh) {
+  .history-modal-content {
+    height: min(var(--history-modal-h, 520px), 70vh);
+    max-height: 90vh;
+  }
+}

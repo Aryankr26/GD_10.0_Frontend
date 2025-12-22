@@ -758,14 +758,8 @@ export function LabourSection() {
         isOpen={ledgerOpen}
         onClose={closeLedger}
         title={ledgerWorker ? `Ledger — ${getDisplayName(ledgerWorker)}` : "Ledger"}
-        defaultWidth={isDesktop ? 1000 : 9999}
-        defaultHeight={isDesktop ? 650 : 9999}
-        contentStyle={{ resize: isDesktop ? "both" : "none" }}
-        contentClassName={
-          isDesktop
-            ? ""
-            : "!max-w-none !w-[100vw] !h-[100dvh] !max-h-none !rounded-none"
-        }
+        defaultWidth={1000}
+        defaultHeight={650}
       >
         {ledgerLoading ? (
           <p className="text-center py-8 text-gray-500">Loading…</p>

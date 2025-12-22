@@ -278,18 +278,6 @@ const exportToCSV = (rows, filename) => {
                   title="Cash History"
                   defaultWidth={900}
                   defaultHeight={600}
-                  contentClassName={isDesktop ? "" : "w-screen h-[100svh] max-w-none max-h-none rounded-none"}
-                  contentStyle={
-                    isDesktop
-                      ? undefined
-                      : {
-                          width: "100vw",
-                          maxWidth: "100vw",
-                          height: "100svh",
-                          maxHeight: "100svh",
-                          resize: "none",
-                        }
-                  }
                 >
                   <div className="space-y-4">
                     <div className="flex justify-end">
@@ -313,70 +301,43 @@ const exportToCSV = (rows, filename) => {
                       <p className="text-center py-6 text-gray-500">
                         No transactions
                       </p>
-                    ) : isDesktop ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Particulars</TableHead>
-                            <TableHead className="text-right">Debit</TableHead>
-                            <TableHead className="text-right">Credit</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {cashTransactions.map((t) => (
-                            <TableRow key={t.id}>
-                              <TableCell>
-                                {new Date(t.date).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>{t.reference || t.category}</TableCell>
-                              <TableCell className="text-right text-red-600">
-                                {t.type === "debit" ? formatINR(t.amount) : "-"}
-                              </TableCell>
-                              <TableCell className="text-right text-green-600">
-                                {t.type === "credit" ? formatINR(t.amount) : "-"}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
                     ) : (
-                      <div className="space-y-3">
-                        {cashTransactions.map((t) => {
-                          const particulars = t.reference || t.category || "—";
-                          const debit = t.type === "debit" ? Number(t.amount || 0) : 0;
-                          const credit = t.type === "credit" ? Number(t.amount || 0) : 0;
-                          return (
-                            <Card key={t.id} className="border">
-                              <CardHeader className="pb-3">
+                      <div className="overflow-hidden rounded-md border">
+                        <div className="divide-y">
+                          {cashTransactions.map((t) => {
+                            const particulars = t.reference || t.category || "—";
+                            const isDebit = t.type === "debit";
+                            const amount = Number(t.amount || 0);
+
+                            return (
+                              <div key={t.id} className="px-3 py-3 sm:px-4">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
-                                    <CardTitle className="text-base">
+                                    <p className="text-sm font-medium text-foreground">
                                       {new Date(t.date).toLocaleDateString()}
-                                    </CardTitle>
-                                    <p className="text-sm text-gray-600 break-words">
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground break-words">
                                       {particulars}
                                     </p>
                                   </div>
-                                  <div className="text-right">
-                                    {debit > 0 ? (
-                                      <div className="text-lg font-semibold text-red-600">
-                                        {formatINR(debit)}
-                                      </div>
-                                    ) : (
-                                      <div className="text-lg font-semibold text-green-600">
-                                        {formatINR(credit)}
-                                      </div>
-                                    )}
-                                    <div className="text-xs text-gray-500">
-                                      {debit > 0 ? "Debit" : "Credit"}
-                                    </div>
+
+                                  <div className="shrink-0 text-right">
+                                    <p
+                                      className={`text-sm font-semibold ${
+                                        isDebit ? "text-red-600" : "text-green-600"
+                                      }`}
+                                    >
+                                      {formatINR(amount)}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                      {isDebit ? "Debit" : "Credit"}
+                                    </p>
                                   </div>
                                 </div>
-                              </CardHeader>
-                            </Card>
-                          );
-                        })}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -504,18 +465,6 @@ const exportToCSV = (rows, filename) => {
                 title="Bank Statement"
                 defaultWidth={900}
                 defaultHeight={600}
-                contentClassName={isDesktop ? "" : "w-screen h-[100svh] max-w-none max-h-none rounded-none"}
-                contentStyle={
-                  isDesktop
-                    ? undefined
-                    : {
-                        width: "100vw",
-                        maxWidth: "100vw",
-                        height: "100svh",
-                        maxHeight: "100svh",
-                        resize: "none",
-                      }
-                }
               >
                 <div className="space-y-4">
                   <div className="flex justify-end">
@@ -539,70 +488,43 @@ const exportToCSV = (rows, filename) => {
                     <p className="text-center py-6 text-gray-500">
                       No transactions
                     </p>
-                  ) : isDesktop ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Particulars</TableHead>
-                          <TableHead className="text-right">Debit</TableHead>
-                          <TableHead className="text-right">Credit</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {bankTransactions.map((t) => (
-                          <TableRow key={t.id}>
-                            <TableCell>
-                              {new Date(t.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>{t.reference || t.category}</TableCell>
-                            <TableCell className="text-right text-red-600">
-                              {t.type === "debit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
-                            <TableCell className="text-right text-green-600">
-                              {t.type === "credit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
                   ) : (
-                    <div className="space-y-3">
-                      {bankTransactions.map((t) => {
-                        const particulars = t.reference || t.category || "—";
-                        const debit = t.type === "debit" ? Number(t.amount || 0) : 0;
-                        const credit = t.type === "credit" ? Number(t.amount || 0) : 0;
-                        return (
-                          <Card key={t.id} className="border">
-                            <CardHeader className="pb-3">
+                    <div className="overflow-hidden rounded-md border">
+                      <div className="divide-y">
+                        {bankTransactions.map((t) => {
+                          const particulars = t.reference || t.category || "—";
+                          const isDebit = t.type === "debit";
+                          const amount = Number(t.amount || 0);
+
+                          return (
+                            <div key={t.id} className="px-3 py-3 sm:px-4">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <CardTitle className="text-base">
+                                  <p className="text-sm font-medium text-foreground">
                                     {new Date(t.date).toLocaleDateString()}
-                                  </CardTitle>
-                                  <p className="text-sm text-gray-600 break-words">
+                                  </p>
+                                  <p className="mt-0.5 text-xs text-muted-foreground break-words">
                                     {particulars}
                                   </p>
                                 </div>
-                                <div className="text-right">
-                                  {debit > 0 ? (
-                                    <div className="text-lg font-semibold text-red-600">
-                                      {formatINR(debit)}
-                                    </div>
-                                  ) : (
-                                    <div className="text-lg font-semibold text-green-600">
-                                      {formatINR(credit)}
-                                    </div>
-                                  )}
-                                  <div className="text-xs text-gray-500">
-                                    {debit > 0 ? "Debit" : "Credit"}
-                                  </div>
+
+                                <div className="shrink-0 text-right">
+                                  <p
+                                    className={`text-sm font-semibold ${
+                                      isDebit ? "text-red-600" : "text-green-600"
+                                    }`}
+                                  >
+                                    {formatINR(amount)}
+                                  </p>
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {isDebit ? "Debit" : "Credit"}
+                                  </p>
                                 </div>
                               </div>
-                            </CardHeader>
-                          </Card>
-                        );
-                      })}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

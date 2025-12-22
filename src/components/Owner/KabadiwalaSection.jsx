@@ -216,20 +216,6 @@ export function KabadiwalaSection() {
         title={activeVendor ? `Ledger — ${activeVendor.vendor_name}` : "Ledger"}
         defaultWidth={1000}
         defaultHeight={650}
-        contentClassName={
-          isDesktop ? "" : "w-screen h-[100svh] max-w-none max-h-none rounded-none"
-        }
-        contentStyle={
-          isDesktop
-            ? undefined
-            : {
-                width: "100vw",
-                maxWidth: "100vw",
-                height: "100svh",
-                maxHeight: "100svh",
-                resize: "none",
-              }
-        }
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2">
