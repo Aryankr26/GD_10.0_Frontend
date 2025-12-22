@@ -45,6 +45,8 @@ import {
   Save,
   RefreshCcw,
   Trash2,
+  Package,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatINR } from "../../utils/currencyFormat";
@@ -333,40 +335,42 @@ export default function RatesUpdate() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
             Material Rates Update
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Maintain global rates and vendor-specific rates (feriwala / kabadiwala).
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             onClick={() => fetchAll()}
             variant="outline"
+            size="sm"
             className="gap-2"
             aria-label="Refresh rates"
           >
             <RefreshCcw className="h-4 w-4" />
-            Refresh
+            <span className="hidden md:inline">Refresh</span>
           </Button>
           <Button
             onClick={() => setAddMaterialOpen(true)}
+            size="sm"
             className="gap-2"
             aria-label="Add new material"
           >
             <Plus className="h-4 w-4" />
-            Add Material
+            <span className="hidden md:inline">Add Material</span>
           </Button>
 
           <Dialog open={addVendorOpen} onOpenChange={setAddVendorOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2" variant="outline">
+              <Button size="sm" className="gap-2" variant="outline">
                 <UserPlus className="h-4 w-4" />
-                Add Vendor
+                <span className="hidden md:inline">Add Vendor</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -451,21 +455,22 @@ export default function RatesUpdate() {
         </Card>
       </div>
 
-      {/* GLOBAL RATES TABLE */}
+      {/* GLOBAL RATES */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <CardTitle>Global Material Rates</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base md:text-lg">Global Material Rates</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Update global base rates here. Vendor rates will adjust keeping their offset.
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant="outline"
                 onClick={() => setAddMaterialOpen(true)}
                 className="gap-2"
+                size="sm"
               >
                 <Plus className="h-4 w-4" /> Add Material
               </Button>
@@ -474,81 +479,139 @@ export default function RatesUpdate() {
                 onClick={() => {
                   toast("Use edit button on each row to change rate");
                 }}
+                size="sm"
               >
-                <Bell className="h-4 w-4" /> Notify Vendors
+                <Bell className="h-4 w-4" /> Notify
               </Button>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Material</TableHead>
-                <TableHead>Global Rate (₹/kg)</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead>Change</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {materials.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No materials
-                  </TableCell>
-                </TableRow>
-              ) : (
-                materials.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell>{m.material_type}</TableCell>
-                    <TableCell className="font-semibold">{formatINR(m.global_rate)}</TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {m.last_updated ? new Date(m.last_updated).toLocaleDateString("en-IN") : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {getRateChange(m) >= 0 ? (
-                          <span className="inline-flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3" /> ₹{getRateChange(m)}/kg
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1">
-                            <TrendingDown className="h-3 w-3" /> ₹{getRateChange(m)}/kg
-                          </span>
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right flex gap-2 justify-end">
+          {/* Mobile: Cards */}
+          <div className="md:hidden space-y-3">
+            {materials.length === 0 ? (
+              <div className="text-center py-10">
+                <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                <p className="text-gray-500">No materials added yet</p>
+                <p className="text-sm text-gray-400 mt-1">Add a material to set global rates</p>
+              </div>
+            ) : (
+              materials.map((m) => (
+                <Card key={m.id} className="border-l-4 border-l-blue-500">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-base">{m.material_type}</p>
+                        <p className="text-xs text-gray-500">
+                          Updated: {m.last_updated ? new Date(m.last_updated).toLocaleDateString("en-IN") : "—"}
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold text-blue-600">
+                        {formatINR(m.global_rate)}/kg
+                      </p>
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t">
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => {
                           setEditingMaterial(m);
                           setNewGlobalRate(m.global_rate ?? "");
                           setEditMaterialOpen(true);
                         }}
-                        aria-label={`Edit ${m.material_type}`}
+                        className="flex-1"
                       >
-                        <Edit className="h-4 w-4" /> Edit
+                        <Edit className="h-4 w-4 mr-1" /> Edit
                       </Button>
-
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteMaterial(m.id)}
-                        aria-label={`Delete ${m.material_type}`}
                       >
-                        <Trash2 className="h-4 w-4" /> Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop: Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Material</TableHead>
+                  <TableHead>Global Rate (₹/kg)</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead>Change</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {materials.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-10">
+                      <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                      <p className="text-gray-500">No materials added yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Add a material to set global rates</p>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  materials.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell>{m.material_type}</TableCell>
+                      <TableCell className="font-semibold">{formatINR(m.global_rate)}</TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {m.last_updated ? new Date(m.last_updated).toLocaleDateString("en-IN") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {getRateChange(m) >= 0 ? (
+                            <span className="inline-flex items-center gap-1">
+                              <TrendingUp className="h-3 w-3" /> ₹{getRateChange(m)}/kg
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1">
+                              <TrendingDown className="h-3 w-3" /> ₹{getRateChange(m)}/kg
+                            </span>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingMaterial(m);
+                              setNewGlobalRate(m.global_rate ?? "");
+                              setEditMaterialOpen(true);
+                            }}
+                            aria-label={`Edit ${m.material_type}`}
+                          >
+                            <Edit className="h-4 w-4" /> Edit
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteMaterial(m.id)}
+                            aria-label={`Delete ${m.material_type}`}
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -557,8 +620,8 @@ export default function RatesUpdate() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Vendors & Their Rates</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base md:text-lg">Vendors & Their Rates</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Assign and view per-vendor rates for each material
               </CardDescription>
             </div>
@@ -566,55 +629,108 @@ export default function RatesUpdate() {
         </CardHeader>
 
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Rates</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {vendors.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                    No vendors
-                  </TableCell>
-                </TableRow>
-              ) : (
-                vendors.map((v) => (
-                  <TableRow key={v.vendor_id}>
-                    <TableCell>{v.vendor_name}</TableCell>
-                    <TableCell className="capitalize">{v.type}</TableCell>
-                    <TableCell>
+          {/* Mobile: Cards */}
+          <div className="md:hidden space-y-3">
+            {vendors.length === 0 ? (
+              <div className="text-center py-10">
+                <Users className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                <p className="text-gray-500">No vendors added yet</p>
+                <p className="text-sm text-gray-400 mt-1">Add feriwala or kabadiwala vendors</p>
+              </div>
+            ) : (
+              vendors.map((v) => (
+                <Card key={v.vendor_id} className="border-l-4 border-l-purple-500">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold text-base">{v.vendor_name}</p>
+                        <p className="text-xs text-gray-500 capitalize">{v.type}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2 border-t">
+                      <p className="text-xs text-gray-500 mb-2">Material Rates:</p>
                       {v.rates?.length === 0 ? (
-                        <span className="text-sm text-gray-500">No rates set</span>
+                        <p className="text-sm text-gray-400 mb-2">No rates set</p>
                       ) : (
-                        <div className="flex gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-wrap mb-2">
                           {v.rates.map((r) => (
-                            <Badge key={r.scrap_type_id} className="gap-2">
+                            <Badge key={r.scrap_type_id} className="gap-1 text-xs">
                               {r.scrap_type}: {formatINR(r.vendor_rate)} ({r.rate_offset >= 0 ? `+${formatINR(r.rate_offset)}` : formatINR(r.rate_offset)})
                             </Badge>
                           ))}
                         </div>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right flex gap-2 justify-end">
-                      <Button size="sm" variant="ghost" onClick={() => openSetRateModal(v)}>
-                        <Save className="h-4 w-4" /> Set Rate
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button size="sm" variant="outline" onClick={() => openSetRateModal(v)} className="flex-1">
+                        <Save className="h-4 w-4 mr-1" /> Set Rate
                       </Button>
-
                       <Button size="sm" variant="destructive" onClick={() => handleDeleteVendor(v.vendor_id)}>
-                        <Trash2 className="h-4 w-4" /> Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop: Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Rates</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {vendors.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-10">
+                      <Users className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                      <p className="text-gray-500">No vendors added yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Add feriwala or kabadiwala vendors</p>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  vendors.map((v) => (
+                    <TableRow key={v.vendor_id}>
+                      <TableCell>{v.vendor_name}</TableCell>
+                      <TableCell className="capitalize">{v.type}</TableCell>
+                      <TableCell>
+                        {v.rates?.length === 0 ? (
+                          <span className="text-sm text-gray-500">No rates set</span>
+                        ) : (
+                          <div className="flex gap-2 flex-wrap">
+                            {v.rates.map((r) => (
+                              <Badge key={r.scrap_type_id} className="gap-2">
+                                {r.scrap_type}: {formatINR(r.vendor_rate)} ({r.rate_offset >= 0 ? `+${formatINR(r.rate_offset)}` : formatINR(r.rate_offset)})
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => openSetRateModal(v)}>
+                            <Save className="h-4 w-4" /> Set Rate
+                          </Button>
+
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteVendor(v.vendor_id)}>
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

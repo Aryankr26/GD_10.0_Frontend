@@ -218,16 +218,19 @@ const exportToCSV = (rows, filename) => {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="text-gray-900 mb-1">Rokadi Update</h2>
-          <p className="text-gray-500">Cash & bank position</p>
+          <h2 className="text-lg font-bold text-gray-900">Rokadi Update</h2>
+          <p className="text-sm text-gray-500">Cash & bank position</p>
         </div>
         <div className="flex gap-2">
           <OwnerReadOnlyBadge />
-          <Button variant="outline" onClick={loadRokadi}>
+          <Button variant="outline" onClick={loadRokadi} size="sm" className="hidden md:flex">
             <RefreshCcw className="w-4 h-4 mr-2" />
             Refresh
+          </Button>
+          <Button variant="outline" onClick={loadRokadi} size="sm" className="md:hidden">
+            <RefreshCcw className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -236,13 +239,13 @@ const exportToCSV = (rows, filename) => {
       <Card className="border-2 border-green-200 bg-green-50">
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
-            <CardTitle className="text-green-700">Total Rokadi</CardTitle>
-            <CardDescription>Cash + Bank</CardDescription>
+            <CardTitle className="text-green-700 text-base md:text-lg">Total Rokadi</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Cash + Bank</CardDescription>
           </div>
-          <Wallet className="w-8 h-8 text-green-700" />
+          <Wallet className="w-6 h-6 md:w-8 md:h-8 text-green-700" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-green-700">
+          <div className="text-2xl md:text-3xl font-bold text-green-700">
             {formatINR(totalRokadi)}
           </div>
         </CardContent>
@@ -268,125 +271,139 @@ const exportToCSV = (rows, filename) => {
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">History</Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                  <DialogHeader className="flex flex-row items-center justify-between">
-  <DialogTitle>Cash History</DialogTitle>
+                <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col w-full md:max-w-3xl">
+                  <DialogHeader className="sticky top-0 bg-white dark:bg-gray-800 pb-3 border-b flex flex-row items-center justify-between">
+                    <DialogTitle>Cash History</DialogTitle>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        exportToCSV(
+                          cashTransactions,
+                          `Cash_History_${new Date().toISOString().slice(0,10)}.csv`
+                        )
+                      }
+                    >
+                      Export
+                    </Button>
+                  </DialogHeader>
 
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={() =>
-      exportToCSV(
-        cashTransactions,
-        `Cash_History_${new Date().toISOString().slice(0,10)}.csv`
-      )
-    }
-  >
-    Export
-  </Button>
-</DialogHeader>
-
-                  {cashLoading ? (
-                    <p className="text-center py-6">Loading…</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Particulars</TableHead>
-                          <TableHead className="text-right">Debit</TableHead>
-                          <TableHead className="text-right">Credit</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {cashTransactions.map(t => (
-                          <TableRow key={t.id}>
-                            <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
-                            <TableCell>{t.reference || t.category}</TableCell>
-                            <TableCell className="text-right text-red-600">
-                              {t.type === "debit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
-                            <TableCell className="text-right text-green-600">
-                              {t.type === "credit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
+                  <div className="overflow-y-auto flex-1 px-1">
+                    {cashLoading ? (
+                      <p className="text-center py-6">Loading…</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Particulars</TableHead>
+                              <TableHead className="text-right">Debit</TableHead>
+                              <TableHead className="text-right">Credit</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {cashTransactions.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center py-10">
+                                  <Wallet className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                                  <p className="text-gray-500">No cash transactions yet</p>
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              cashTransactions.map(t => (
+                                <TableRow key={t.id}>
+                                  <TableCell className="whitespace-nowrap">{new Date(t.date).toLocaleDateString()}</TableCell>
+                                  <TableCell>{t.reference || t.category}</TableCell>
+                                  <TableCell className="text-right text-red-600 whitespace-nowrap">
+                                    {t.type === "debit" ? formatINR(t.amount) : "-"}
+                                  </TableCell>
+                                  <TableCell className="text-right text-green-600 whitespace-nowrap">
+                                    {t.type === "credit" ? formatINR(t.amount) : "-"}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
                 </DialogContent>
               </Dialog>
             )}
 
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2" size="sm">
                 <Plus className="w-4 h-4" />
-                Add Cash
+                <span className="hidden md:inline">Add Cash</span>
               </Button>
             </DialogTrigger>
 
-            <DialogContent>
-              <DialogHeader>
+            <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogHeader className="sticky top-0 bg-white dark:bg-gray-800 pb-3 border-b">
                 <DialogTitle>Add Cash (Credit)</DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-3">
-                <div>
-                  <Label>Cash Account</Label>
-                  <Select
-                    value={addForm.account_id}
-                    onValueChange={(v) =>
-                      setAddForm({ ...addForm, account_id: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select cash account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cashAccounts.map(a => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.account_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="overflow-y-auto flex-1 px-1">
+                <div className="space-y-3 py-3">
+                  <div>
+                    <Label>Cash Account</Label>
+                    <Select
+                      value={addForm.account_id}
+                      onValueChange={(v) =>
+                        setAddForm({ ...addForm, account_id: v })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select cash account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cashAccounts.map(a => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.account_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label>Amount</Label>
-                  <Input
-                    type="number"
-                    value={addForm.amount}
-                    onChange={(e) =>
-                      setAddForm({ ...addForm, amount: e.target.value })
-                    }
-                  />
-                </div>
+                  <div>
+                    <Label>Amount</Label>
+                    <Input
+                      type="number"
+                      value={addForm.amount}
+                      onChange={(e) =>
+                        setAddForm({ ...addForm, amount: e.target.value })
+                      }
+                    />
+                  </div>
 
-                <div>
-                  <Label>Date</Label>
-                  <Input
-                    type="date"
-                    value={addForm.date}
-                    onChange={(e) =>
-                      setAddForm({ ...addForm, date: e.target.value })
-                    }
-                  />
-                </div>
+                  <div>
+                    <Label>Date</Label>
+                    <Input
+                      type="date"
+                      value={addForm.date}
+                      onChange={(e) =>
+                        setAddForm({ ...addForm, date: e.target.value })
+                      }
+                    />
+                  </div>
 
-                <div>
-                  <Label>Note</Label>
-                  <Input
-                    value={addForm.note}
-                    onChange={(e) =>
-                      setAddForm({ ...addForm, note: e.target.value })
-                    }
-                  />
+                  <div>
+                    <Label>Note</Label>
+                    <Input
+                      value={addForm.note}
+                      onChange={(e) =>
+                        setAddForm({ ...addForm, note: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="sticky bottom-0 bg-white dark:bg-gray-800 pt-3 border-t gap-2">
                 <Button variant="outline" onClick={() => setAddOpen(false)}>
                   Cancel
                 </Button>
@@ -432,61 +449,64 @@ const exportToCSV = (rows, filename) => {
                 <Button variant="outline" size="sm">History</Button>
               </DialogTrigger>
 
-              <DialogContent className="max-w-3xl">
-                <DialogHeader className="flex flex-row items-center justify-between">
-  <DialogTitle>Bank Statement</DialogTitle>
+              <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col w-full md:max-w-3xl">
+                <DialogHeader className="sticky top-0 bg-white dark:bg-gray-800 pb-3 border-b flex flex-row items-center justify-between">
+                  <DialogTitle>Bank Statement</DialogTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      exportToCSV(
+                        bankTransactions,
+                        `Bank_History_${new Date().toISOString().slice(0,10)}.csv`
+                      )
+                    }
+                  >
+                    Export
+                  </Button>
+                </DialogHeader>
 
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={() =>
-      exportToCSV(
-        bankTransactions,
-        `Bank_History_${new Date().toISOString().slice(0,10)}.csv`
-      )
-    }
-  >
-    Export
-  </Button>
-</DialogHeader>
-
-
-                {bankLoading ? (
-                  <p className="text-center py-6">Loading…</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Particulars</TableHead>
-                        <TableHead className="text-right">Debit</TableHead>
-                        <TableHead className="text-right">Credit</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bankTransactions.length > 0 ? (
-                        bankTransactions.map(t => (
-                          <TableRow key={t.id}>
-                            <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
-                            <TableCell>{t.reference || t.category}</TableCell>
-                            <TableCell className="text-right text-red-600">
-                              {t.type === "debit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
-                            <TableCell className="text-right text-green-600">
-                              {t.type === "credit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
+                <div className="overflow-y-auto flex-1 px-1">
+                  {bankLoading ? (
+                    <p className="text-center py-6">Loading…</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Particulars</TableHead>
+                            <TableHead className="text-right">Debit</TableHead>
+                            <TableHead className="text-right">Credit</TableHead>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6">
-                            No transactions
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
+                        </TableHeader>
+                        <TableBody>
+                          {bankTransactions.length > 0 ? (
+                            bankTransactions.map(t => (
+                              <TableRow key={t.id}>
+                                <TableCell className="whitespace-nowrap">{new Date(t.date).toLocaleDateString()}</TableCell>
+                                <TableCell>{t.reference || t.category}</TableCell>
+                                <TableCell className="text-right text-red-600 whitespace-nowrap">
+                                  {t.type === "debit" ? formatINR(t.amount) : "-"}
+                                </TableCell>
+                                <TableCell className="text-right text-green-600 whitespace-nowrap">
+                                  {t.type === "credit" ? formatINR(t.amount) : "-"}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-10">
+                                <Wallet className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                                <p className="text-gray-500">No bank transactions yet</p>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
               </DialogContent>
             </Dialog>
           )}

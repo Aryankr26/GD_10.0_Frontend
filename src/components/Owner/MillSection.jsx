@@ -348,21 +348,24 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
   return (
    <div className="space-y-6">
   {/* HEADER with Month Picker (Monthly Only) */}
-  <div className="flex items-center justify-between">
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
     <div>
-      <h2 className="text-xl font-bold">Party / Mill Section</h2>
-      <p className="text-gray-500">Owner — Create sales & record payments</p>
+      <h2 className="text-lg md:text-xl font-bold">Party / Mill Section</h2>
+      <p className="text-sm text-gray-500">Owner — Create sales & record payments</p>
     </div>
 
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2">
             <Calendar className="w-4 h-4" />
             {/* Display the currently selected month name */}
-            {/* filterDate will now always be YYYY-MM (e.g., "2025-12") */}
-            {/* Inside PopoverTrigger Button: */}
-            {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+            <span className="hidden md:inline">
+              {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+            </span>
+            <span className="md:hidden">
+              {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "short", year: "2-digit" })}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-3 w-56">
@@ -381,64 +384,77 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
                 // Reset to current month (YYYY-MM)
                 const currentMonth = new Date().toISOString().slice(0, 7);
                 setFilterDate(currentMonth); 
-              }}>
-                Reset to Current Month
+              }} size="sm">
+                Reset
               </Button>
             </div>
           </div>
         </PopoverContent>
       </Popover>
 
-      
-          <Button
-            variant="outline"
-            onClick={() => {
-              fetchSales();
-              fetchPayments();
-            }}
-          >
-            <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
-        </div>
-      </div>
+      <Button
+        variant="outline"
+        onClick={() => {
+          fetchSales();
+          fetchPayments();
+        }}
+        size="sm"
+        className="hidden md:flex"
+      >
+        <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => {
+          fetchSales();
+          fetchPayments();
+        }}
+        size="sm"
+        className="md:hidden"
+      >
+        <RefreshCcw className="w-4 h-4" />
+      </Button>
+    </div>
+  </div>
 
       {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Card>
-          <CardHeader><CardTitle className="text-sm">Total Invoice</CardTitle></CardHeader>
-          <CardContent className="text-blue-600 font-semibold">₹{totalInvoiceAmount.toLocaleString()}</CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs md:text-sm">Total Invoice</CardTitle></CardHeader>
+          <CardContent className="text-blue-600 font-semibold text-base md:text-lg">₹{totalInvoiceAmount.toLocaleString()}</CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">Payment Received</CardTitle></CardHeader>
-          <CardContent className="text-green-600 font-semibold">₹{totalReceived.toLocaleString()}</CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs md:text-sm">Payment Received</CardTitle></CardHeader>
+          <CardContent className="text-green-600 font-semibold text-base md:text-lg">₹{totalReceived.toLocaleString()}</CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">Pending Payment</CardTitle></CardHeader>
-          <CardContent className="text-orange-600 font-semibold">₹{pendingPayment.toLocaleString()}</CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs md:text-sm">Pending Payment</CardTitle></CardHeader>
+          <CardContent className="text-orange-600 font-semibold text-base md:text-lg">₹{pendingPayment.toLocaleString()}</CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">Sales Count</CardTitle></CardHeader>
-          <CardContent className="font-semibold">{sales.length} Entries</CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs md:text-sm">Sales Count</CardTitle></CardHeader>
+          <CardContent className="font-semibold text-base md:text-lg">{sales.length} Entries</CardContent>
         </Card>
       </div>
 
       {/* SALES TABLE + Add/Edit/Delete/Download */}
       <Card>
-        <CardHeader className="flex items-center justify-between">
-          <CardTitle>Maal Out (Sales)</CardTitle>
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <CardTitle className="text-base md:text-lg">Maal Out (Sales)</CardTitle>
 
           <div className="flex items-center gap-2">
             {/* Add Sale */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-4 h-4 mr-2" /> Add Sale
+                <Button className="bg-green-600 hover:bg-green-700" size="sm">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Add Sale</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl">
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>Add Sale</DialogTitle></DialogHeader>
                 <form className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4" onSubmit={handleAddSale}>
                   <div><Label>Firm Name</Label><Input required value={saleForm.firm_name} onChange={(e)=>setSaleForm({...saleForm, firm_name: e.target.value})} /></div>
@@ -639,15 +655,16 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
 
       {/* PAYMENTS TABLE */}
       <Card>
-        <CardHeader className="flex items-center justify-between">
-          <CardTitle>Payments Received</CardTitle>
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <CardTitle className="text-base md:text-lg">Payments Received</CardTitle>
 
           <div className="flex items-center gap-2">
             {/* Add Payment */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="w-4 h-4 mr-2" /> Add Payment
+                <Button className="bg-emerald-600 hover:bg-emerald-700" size="sm">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Add Payment</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">

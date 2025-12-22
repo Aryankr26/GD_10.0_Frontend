@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { RefreshCcw, FileDown, X } from "lucide-react";
+import { RefreshCcw, FileDown, X, Package } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/dateFormat";
 
@@ -146,18 +146,19 @@ export function KabadiwalaSection() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             Kabadiwala Ledger (Owner)
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Outstanding & transaction history
           </p>
         </div>
 
-        <Button variant="outline" onClick={loadBalances}>
-          <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+        <Button variant="outline" onClick={loadBalances} size="sm">
+          <RefreshCcw className="w-4 h-4 md:mr-2" />
+          <span className="hidden md:inline">Refresh</span>
         </Button>
       </div>
 
@@ -173,106 +174,183 @@ export function KabadiwalaSection() {
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredVendors.map((v) => (
-            <Card key={v.vendor_id}>
-              <CardHeader>
-                <CardTitle className="text-base">{v.vendor_name}</CardTitle>
-                <CardDescription>Outstanding</CardDescription>
-              </CardHeader>
+        <>
+          {/* Mobile: Cards */}
+          <div className="md:hidden grid grid-cols-1 gap-3">
+            {filteredVendors.length === 0 ? (
+              <div className="text-center py-10">
+                <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                <p className="text-gray-500">No kabadiwala records found</p>
+                <p className="text-sm text-gray-400 mt-1">Start adding vendors to track scrap sales</p>
+              </div>
+            ) : (
+              filteredVendors.map((v) => (
+                <Card key={v.vendor_id} className="border-l-4 border-l-purple-500">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-base">{v.vendor_name}</p>
+                        <p className="text-xs text-gray-500">Outstanding Amount</p>
+                      </div>
+                      <p
+                        className={`text-xl font-bold ${
+                          v.balance > 0
+                            ? "text-red-600"
+                            : v.balance < 0
+                            ? "text-green-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        ₹{Number(v.balance).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => loadLedger(v)}
+                    >
+                      View History
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
 
-              <CardContent>
-                <p
-                  className={`text-2xl font-bold ${
-                    v.balance > 0
-                      ? "text-red-600"
-                      : v.balance < 0
-                      ? "text-green-600"
-                      : ""
-                  }`}
-                >
-                  ₹{Number(v.balance).toLocaleString()}
-                </p>
-
-                <Button
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => loadLedger(v)}
-                >
-                  View History
-                </Button>
+          {/* Desktop: Table */}
+          <div className="hidden md:block">
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Vendor Name</TableHead>
+                        <TableHead className="text-right">Outstanding Balance</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredVendors.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center py-10">
+                            <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                            <p className="text-gray-500">No kabadiwala records found</p>
+                            <p className="text-sm text-gray-400 mt-1">Start adding vendors to track scrap sales</p>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredVendors.map((v) => (
+                          <TableRow key={v.vendor_id}>
+                            <TableCell className="font-medium">{v.vendor_name}</TableCell>
+                            <TableCell className="text-right">
+                              <span
+                                className={`text-lg font-bold ${
+                                  v.balance > 0
+                                    ? "text-red-600"
+                                    : v.balance < 0
+                                    ? "text-green-600"
+                                    : "text-gray-600"
+                                }`}
+                              >
+                                ₹{Number(v.balance).toLocaleString()}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => loadLedger(v)}
+                              >
+                                View History
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* LEDGER MODAL */}
       {activeVendor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur bg-black/40">
-          <Card className="w-full max-w-5xl max-h-[85vh] overflow-auto">
-            <CardHeader className="flex flex-row justify-between items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-0 md:p-4">
+          <Card className="w-full h-full md:h-auto md:max-w-5xl md:max-h-[85vh] flex flex-col overflow-hidden">
+            <CardHeader className="flex flex-row justify-between items-center border-b bg-white dark:bg-gray-800 flex-shrink-0">
               <div>
-                <CardTitle>
+                <CardTitle className="text-lg">
                   Ledger — {activeVendor.vendor_name}
                 </CardTitle>
                 <CardDescription>Chronological view</CardDescription>
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={exportCSV}>
+                <Button variant="outline" onClick={exportCSV} size="sm" className="hidden md:flex">
                   <FileDown className="w-4 h-4 mr-1" /> Export
                 </Button>
-                <Button variant="ghost" onClick={() => setActiveVendor(null)}>
-                  <X />
+                <Button variant="outline" onClick={exportCSV} size="sm" className="md:hidden">
+                  <FileDown className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" onClick={() => setActiveVendor(null)} size="sm">
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto p-4">
               {ledgerLoading ? (
                 <p className="text-center py-6">Loading...</p>
               ) : ledger.length === 0 ? (
-                <p className="text-center py-6 text-gray-500">
-                  No transactions
-                </p>
+                <div className="text-center py-10">
+                  <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                  <p className="text-gray-500">No transactions yet</p>
+                </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right">Balance</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="text-right">Balance</TableHead>
+                        </TableRow>
+                      </TableHeader>
 
-                  <TableBody>
-                    {ledger.map((l, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{formatDate(l.date)}</TableCell>
-                        <TableCell>{l.type}</TableCell>
-                        <TableCell>
-                          <pre className="whitespace-pre-wrap text-sm">
-                            {l.description}
-                          </pre>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          ₹{l.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          ₹{l.balance.toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                      <TableBody>
+                        {ledger.map((l, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="whitespace-nowrap">{formatDate(l.date)}</TableCell>
+                            <TableCell>{l.type}</TableCell>
+                            <TableCell>
+                              <pre className="whitespace-pre-wrap text-sm font-sans">
+                                {l.description}
+                              </pre>
+                            </TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              ₹{l.amount.toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-right font-medium whitespace-nowrap">
+                              ₹{l.balance.toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t text-right font-semibold text-lg">
+                    Final Outstanding: <span className="text-red-600">₹{outstanding.toLocaleString()}</span>
+                  </div>
+                </>
               )}
-
-              <div className="mt-4 text-right font-semibold">
-                Final Outstanding: ₹{outstanding.toLocaleString()}
-              </div>
             </CardContent>
           </Card>
         </div>

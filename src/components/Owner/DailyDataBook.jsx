@@ -163,22 +163,23 @@ export function DailyDataBook() {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             Daily Data Book
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Notebook-style daily expense register
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2">
                 <Calendar className="w-4 h-4" />
-                {filterDate === todayISO ? "Today" : formatDate(filterDate)}
+                <span className="hidden md:inline">{filterDate === todayISO ? "Today" : formatDate(filterDate)}</span>
+                <span className="md:hidden">{filterDate === todayISO ? "Today" : new Date(filterDate).getDate()}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
@@ -190,12 +191,18 @@ export function DailyDataBook() {
             </PopoverContent>
           </Popover>
 
-          <Button onClick={fetchExpenses} variant="outline">
+          <Button onClick={fetchExpenses} variant="outline" size="sm" className="hidden md:flex">
             <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
           </Button>
+          <Button onClick={fetchExpenses} variant="outline" size="sm" className="md:hidden">
+            <RefreshCcw className="w-4 h-4" />
+          </Button>
 
-          <Button className="bg-green-600">
+          <Button className="bg-green-600 hidden md:flex" size="sm">
             <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
+          <Button className="bg-green-600 md:hidden" size="sm">
+            <Download className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -231,65 +238,135 @@ export function DailyDataBook() {
               </CardTitle>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="pt-4">
               {loading ? (
                 <p className="text-center py-10">Loading page…</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Paid To</TableHead>
-                      <TableHead>Mode</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Entered By</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
+                <>
+                  {/* Mobile: Cards */}
+                  <div className="md:hidden space-y-3">
                     {expenses.length > 0 ? (
                       expenses.map((e) => (
-                        <TableRow key={e.id}>
-                          <TableCell>{e.category}</TableCell>
-                          <TableCell>{e.description}</TableCell>
-                          <TableCell>{e.paid_to}</TableCell>
-                          <TableCell>{e.payment_mode}</TableCell>
-                          <TableCell className="text-red-600 font-semibold">
-                            ₹{Number(e.amount).toLocaleString()}
-                          </TableCell>
-                          <TableCell>{e.created_by_name || "Manager"}</TableCell>
-                          <TableCell className="text-right flex gap-2 justify-end">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingExpense(e);
-                                setEditOpen(true);
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(e.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                        <Card key={e.id} className="border-l-4 border-l-red-400">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <p className="font-semibold text-base">{e.category}</p>
+                                <p className="text-sm text-gray-600 mt-1">{e.description}</p>
+                              </div>
+                              <p className="text-lg font-bold text-red-600 ml-2">
+                                ₹{Number(e.amount).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm mt-3 pt-2 border-t">
+                              <div>
+                                <p className="text-xs text-gray-500">Paid To</p>
+                                <p className="font-medium">{e.paid_to}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Mode</p>
+                                <p className="font-medium">{e.payment_mode}</p>
+                              </div>
+                              <div className="col-span-2">
+                                <p className="text-xs text-gray-500">Entered By</p>
+                                <p className="font-medium">{e.created_by_name || "Manager"}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mt-3 pt-2 border-t">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingExpense(e);
+                                  setEditOpen(true);
+                                }}
+                                className="flex-1"
+                              >
+                                <Edit className="w-4 h-4 mr-1" /> Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDelete(e.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          No entries for this day
-                        </TableCell>
-                      </TableRow>
+                      <div className="text-center py-10">
+                        <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                        <p className="text-gray-500">No entries for this day</p>
+                        <p className="text-sm text-gray-400 mt-1">Start adding expenses to track daily spending</p>
+                      </div>
                     )}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop: Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Paid To</TableHead>
+                          <TableHead>Mode</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Entered By</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+
+                      <TableBody>
+                        {expenses.length > 0 ? (
+                          expenses.map((e) => (
+                            <TableRow key={e.id}>
+                              <TableCell>{e.category}</TableCell>
+                              <TableCell>{e.description}</TableCell>
+                              <TableCell>{e.paid_to}</TableCell>
+                              <TableCell>{e.payment_mode}</TableCell>
+                              <TableCell className="text-red-600 font-semibold">
+                                ₹{Number(e.amount).toLocaleString()}
+                              </TableCell>
+                              <TableCell>{e.created_by_name || "Manager"}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex gap-2 justify-end">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditingExpense(e);
+                                      setEditOpen(true);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(e.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-10">
+                              <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                              <p className="text-gray-500">No entries for this day</p>
+                              <p className="text-sm text-gray-400 mt-1">Start adding expenses to track daily spending</p>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -298,57 +375,59 @@ export function DailyDataBook() {
 
       {/* EDIT DIALOG */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="sticky top-0 bg-white dark:bg-gray-800 pb-3 border-b">
             <DialogTitle>Edit Expense</DialogTitle>
           </DialogHeader>
 
-          {editingExpense && (
-            <div className="space-y-4">
-              <div>
-                <Label>Category</Label>
-                <Input
-                  value={editingExpense.category}
-                  onChange={(e) =>
-                    setEditingExpense({ ...editingExpense, category: e.target.value })
-                  }
-                />
-              </div>
+          <div className="overflow-y-auto flex-1 px-1">
+            {editingExpense && (
+              <div className="space-y-4 py-3">
+                <div>
+                  <Label>Category</Label>
+                  <Input
+                    value={editingExpense.category}
+                    onChange={(e) =>
+                      setEditingExpense({ ...editingExpense, category: e.target.value })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label>Description</Label>
-                <Input
-                  value={editingExpense.description}
-                  onChange={(e) =>
-                    setEditingExpense({ ...editingExpense, description: e.target.value })
-                  }
-                />
-              </div>
+                <div>
+                  <Label>Description</Label>
+                  <Input
+                    value={editingExpense.description}
+                    onChange={(e) =>
+                      setEditingExpense({ ...editingExpense, description: e.target.value })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label>Paid To</Label>
-                <Input
-                  value={editingExpense.paid_to}
-                  onChange={(e) =>
-                    setEditingExpense({ ...editingExpense, paid_to: e.target.value })
-                  }
-                />
-              </div>
+                <div>
+                  <Label>Paid To</Label>
+                  <Input
+                    value={editingExpense.paid_to}
+                    onChange={(e) =>
+                      setEditingExpense({ ...editingExpense, paid_to: e.target.value })
+                    }
+                  />
+                </div>
 
-              <div>
-                <Label>Amount</Label>
-                <Input
-                  type="number"
-                  value={editingExpense.amount}
-                  onChange={(e) =>
-                    setEditingExpense({ ...editingExpense, amount: e.target.value })
-                  }
-                />
+                <div>
+                  <Label>Amount</Label>
+                  <Input
+                    type="number"
+                    value={editingExpense.amount}
+                    onChange={(e) =>
+                      setEditingExpense({ ...editingExpense, amount: e.target.value })
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-white dark:bg-gray-800 pt-3 border-t gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
