@@ -40,8 +40,10 @@ import {
 } from "lucide-react";
 import { formatDate, getTodayISO } from "../../utils/dateFormat";
 import { toast } from "sonner";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 export function DailyDataBook() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const todayISO = getTodayISO();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -90,6 +92,9 @@ export function DailyDataBook() {
   useEffect(() => {
     fetchExpenses();
     fetchSummary();
+    // NOTE: fetchExpenses/fetchSummary are declared inline and depend on filterDate.
+    // Keeping only [filterDate] avoids extra re-renders/refetch cycles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDate]);
 
   /* ================= DATE NAV ================= */
@@ -163,17 +168,17 @@ export function DailyDataBook() {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Daily Data Book
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Notebook-style daily expense register
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -190,12 +195,14 @@ export function DailyDataBook() {
             </PopoverContent>
           </Popover>
 
-          <Button onClick={fetchExpenses} variant="outline">
-            <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+          <Button onClick={fetchExpenses} variant="outline" size="sm">
+            <RefreshCcw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
 
-          <Button className="bg-green-600">
-            <Download className="w-4 h-4 mr-2" /> Export
+          <Button className="bg-green-600" size="sm">
+            <Download className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>
@@ -235,61 +242,126 @@ export function DailyDataBook() {
               {loading ? (
                 <p className="text-center py-10">Loading page…</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Paid To</TableHead>
-                      <TableHead>Mode</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Entered By</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {expenses.length > 0 ? (
-                      expenses.map((e) => (
-                        <TableRow key={e.id}>
-                          <TableCell>{e.category}</TableCell>
-                          <TableCell>{e.description}</TableCell>
-                          <TableCell>{e.paid_to}</TableCell>
-                          <TableCell>{e.payment_mode}</TableCell>
-                          <TableCell className="text-red-600 font-semibold">
-                            ₹{Number(e.amount).toLocaleString()}
-                          </TableCell>
-                          <TableCell>{e.created_by_name || "Manager"}</TableCell>
-                          <TableCell className="text-right flex gap-2 justify-end">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingExpense(e);
-                                setEditOpen(true);
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(e.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
+                <>
+                  {expenses.length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">
+                      No entries for this day
+                    </p>
+                  ) : isDesktop ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Paid To</TableHead>
+                          <TableHead>Mode</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Entered By</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          No entries for this day
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      </TableHeader>
+
+                      <TableBody>
+                        {expenses.map((e) => (
+                          <TableRow key={e.id}>
+                            <TableCell>{e.category}</TableCell>
+                            <TableCell>{e.description}</TableCell>
+                            <TableCell>{e.paid_to}</TableCell>
+                            <TableCell>{e.payment_mode}</TableCell>
+                            <TableCell className="text-red-600 font-semibold">
+                              ₹{Number(e.amount).toLocaleString()}
+                            </TableCell>
+                            <TableCell>{e.created_by_name || "Manager"}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingExpense(e);
+                                    setEditOpen(true);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDelete(e.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="space-y-3">
+                      {expenses.map((e) => (
+                        <Card key={e.id} className="border">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <CardTitle className="text-base truncate">
+                                  {e.category}
+                                </CardTitle>
+                                <p className="text-sm text-gray-600 break-words">
+                                  {e.description || "—"}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-semibold text-red-600">
+                                  ₹{Number(e.amount).toLocaleString()}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {e.payment_mode || "—"}
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <div className="text-xs text-gray-500">Paid To</div>
+                                <div className="font-medium break-words">
+                                  {e.paid_to || "—"}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-gray-500">Entered By</div>
+                                <div className="font-medium">
+                                  {e.created_by_name || "Manager"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingExpense(e);
+                                  setEditOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4 mr-2" /> Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDelete(e.id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" /> Delete
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

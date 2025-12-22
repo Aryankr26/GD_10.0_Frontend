@@ -194,14 +194,14 @@ export default function MaalInManager() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Maal In</CardTitle>
-          <CardDescription>
-            Unified purchase entry (Feriwala / Kabadiwala / Local / Factory)
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-lg">Maal In</CardTitle>
+          <CardDescription className="text-sm">
+            Purchase entry (Feriwala / Kabadiwala / Local / Factory)
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6">
           {/* VENDOR TYPE */}
           <div>
             <Label>Vendor Type *</Label>
@@ -253,7 +253,7 @@ export default function MaalInManager() {
           <Label>Scrap Items</Label>
 
           {form.scraps.map((row, i) => (
-            <div key={i} className="grid grid-cols-5 gap-3 items-center">
+            <div key={i} className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 items-center p-2 bg-gray-50 rounded-lg sm:bg-transparent sm:p-0">
               <select
                 className="border p-2 rounded"
                 value={row.scrap_type_id}

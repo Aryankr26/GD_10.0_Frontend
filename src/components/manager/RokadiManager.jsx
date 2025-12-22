@@ -9,6 +9,7 @@ import { useData } from '../../utils/dataContext';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Save, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatDate } from '../../utils/dateFormat';
+import { useMediaQuery } from '../../utils/useMediaQuery';
 
 const CASH_IN_CATEGORIES = [
   'Sales Revenue', 'Scrap Sales', 'Dealer Payment', 'Customer Payment', 'Other Income'
@@ -19,6 +20,7 @@ const CASH_OUT_CATEGORIES = [
 ];
 
 export function RokadiManager() {
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const { rokadiTransactions, addRokadiTransaction, updateRokadiTransaction, deleteRokadiTransaction } = useData();
   
   const [isAdding, setIsAdding] = useState(false);
@@ -259,63 +261,118 @@ export function RokadiManager() {
             </form>
           )}
 
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Balance</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rokadiTransactions.length === 0 ? (
+          {isDesktop ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-                      No transactions yet. Add your first transaction above.
-                    </TableCell>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Balance</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ) : (
-                  rokadiTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{formatDate(transaction.date)}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          transaction.transactionType === 'Cash In'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}>
-                          {transaction.transactionType}
-                        </span>
-                      </TableCell>
-                      <TableCell>{transaction.category}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell className={transaction.transactionType === 'Cash In' ? 'text-green-600' : 'text-red-600'}>
-                        {transaction.transactionType === 'Cash In' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className={transaction.balanceAfterTransaction >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        ₹{transaction.balanceAfterTransaction.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(transaction)}>
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleDelete(transaction.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {rokadiTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                        No transactions yet. Add your first transaction above.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    rokadiTransactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell>{formatDate(transaction.date)}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            transaction.transactionType === 'Cash In'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          }`}>
+                            {transaction.transactionType}
+                          </span>
+                        </TableCell>
+                        <TableCell>{transaction.category}</TableCell>
+                        <TableCell>{transaction.description}</TableCell>
+                        <TableCell className={transaction.transactionType === 'Cash In' ? 'text-green-600' : 'text-red-600'}>
+                          {transaction.transactionType === 'Cash In' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className={transaction.balanceAfterTransaction >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          ₹{transaction.balanceAfterTransaction.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(transaction)}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDelete(transaction.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rokadiTransactions.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No transactions yet. Add your first transaction above.</p>
+              ) : (
+                rokadiTransactions.map((transaction) => {
+                  const isIn = transaction.transactionType === 'Cash In';
+                  const amountText = `${isIn ? '+' : '-'}₹${Number(transaction.amount || 0).toLocaleString()}`;
+                  return (
+                    <Card key={transaction.id}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 dark:text-white truncate">{transaction.category}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{formatDate(transaction.date)}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs ${
+                              isIn
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            }`}>
+                              {transaction.transactionType}
+                            </span>
+                            <p className={`mt-1 text-sm font-semibold ${isIn ? 'text-green-600' : 'text-red-600'}`}>{amountText}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Description</p>
+                          <p className="text-sm text-gray-900 dark:text-white break-words">{transaction.description || '—'}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Balance</p>
+                            <p className={`text-sm font-semibold ${Number(transaction.balanceAfterTransaction || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>₹{Number(transaction.balanceAfterTransaction || 0).toLocaleString()}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(transaction)} aria-label="Edit">
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDelete(transaction.id)} aria-label="Delete">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

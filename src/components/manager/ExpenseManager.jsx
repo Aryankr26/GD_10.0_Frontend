@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { Plus, Save, X } from "lucide-react";
 import { formatDate } from "../../utils/dateFormat";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 const EXPENSE_CATEGORIES = [
   "Miscellaneous",
@@ -42,6 +43,7 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export function ExpenseManager() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [expenses, setExpenses] = useState([]);
   const [labours, setLabours] = useState([]);
   const [feriwalas, setFeriwalas] = useState([]);
@@ -122,6 +124,7 @@ export function ExpenseManager() {
 
   useEffect(() => {
     if (API) fetchExpenses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [API]);
 
   const resetForm = () => {
@@ -220,23 +223,25 @@ export function ExpenseManager() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex justify-between">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div>
-              <CardTitle>Daily Kharch </CardTitle>
-              <CardDescription>
-                Record  daily  expenses
+              <CardTitle className="text-lg">Daily Kharch </CardTitle>
+              <CardDescription className="text-sm">
+                Record daily expenses
               </CardDescription>
             </div>
 
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Total Expenses</p>
-              <p className="text-red-600 font-medium">
-                ₹{totalExpenses.toLocaleString()}
-              </p>
+            <div className="flex flex-col items-start sm:items-end gap-2">
+              <div>
+                <p className="text-xs text-gray-500">Total Expenses</p>
+                <p className="text-red-600 font-semibold">
+                  ₹{totalExpenses.toLocaleString()}
+                </p>
+              </div>
               {!isAdding && (
-                <Button onClick={() => setIsAdding(true)} className="mt-2">
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button size="sm" onClick={() => setIsAdding(true)}>
+                  <Plus className="mr-1 h-4 w-4" />
                   Add Expense
                 </Button>
               )}
@@ -244,17 +249,17 @@ export function ExpenseManager() {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {isAdding && (
             <form
               onSubmit={handleSubmit}
-              className="space-y-4 mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
+              className="space-y-4 mb-6 p-3 sm:p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
             >
               {/* FORM — SAME AS YOUR STRUCTURE */}
               {/* (unchanged UI logic, already verified above) */}
               {/* … form fields exactly same as you pasted … */}
            
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Date */}
                 <div className="space-y-2">
                   <Label>Date</Label>
@@ -445,42 +450,83 @@ export function ExpenseManager() {
           )}
 
 
-          <div className="overflow-x-auto mt-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead>Paid To</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.length === 0 ? (
+          {isDesktop ? (
+            <div className="overflow-x-auto mt-6">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">
-                      No expenses yet
-                    </TableCell>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Mode</TableHead>
+                    <TableHead>Paid To</TableHead>
                   </TableRow>
-                ) : (
-                  expenses.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell>{formatDate(e.date)}</TableCell>
-                      <TableCell>{e.category}</TableCell>
-                      <TableCell>{e.description}</TableCell>
-                      <TableCell>
-                        ₹{Number(e.amount).toLocaleString()}
+                </TableHeader>
+                <TableBody>
+                  {expenses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center">
+                        No expenses yet
                       </TableCell>
-                      <TableCell>{e.payment_mode}</TableCell>
-                      <TableCell>{e.paid_to}</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    expenses.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell>{formatDate(e.date)}</TableCell>
+                        <TableCell>{e.category}</TableCell>
+                        <TableCell>{e.description}</TableCell>
+                        <TableCell>
+                          ₹{Number(e.amount).toLocaleString()}
+                        </TableCell>
+                        <TableCell>{e.payment_mode}</TableCell>
+                        <TableCell>{e.paid_to}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3 mt-6">
+              {expenses.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No expenses yet</p>
+              ) : (
+                expenses.map((e) => (
+                  <Card key={e.id} className="w-full">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{e.category || "—"}</p>
+                          <p className="text-sm text-gray-500 truncate">{formatDate(e.date)}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs text-gray-500">Amount</p>
+                          <p className="text-sm font-semibold text-gray-900">₹{Number(e.amount || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500">Description</p>
+                        <p className="text-sm text-gray-900 break-words">{e.description || "—"}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500">Mode</p>
+                          <p className="text-sm text-gray-900 truncate">{e.payment_mode || "—"}</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500">Paid To</p>
+                          <p className="text-sm text-gray-900 truncate">{e.paid_to || "—"}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

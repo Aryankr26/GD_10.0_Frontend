@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../ui/card";
@@ -44,22 +43,31 @@ import {
 import { formatINR } from "../../utils/currencyFormat";
 import { toast } from "sonner";
 import { OwnerReadOnlyBadge } from "./OwnerBadge";
+import { useMediaQuery } from "../../utils/useMediaQuery";
+import { ResizableHistoryModal } from "./ResizableHistoryModal";
 
 export function LabourSection() {
   const API_URL = "https://gd-10-0-backend-1.onrender.com";
   const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
   const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
   const [activeTab, setActiveTab] = useState("labour");
   const [labours, setLabours] = useState([]);
   const [salarySummary, setSalarySummary] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState(null);
+
+  const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [ledgerWorker, setLedgerWorker] = useState(null);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerEntries, setLedgerEntries] = useState([]);
+  const [ledgerTotals, setLedgerTotals] = useState(null);
 
   const [newWorker, setNewWorker] = useState({
     name: "",
@@ -75,7 +83,6 @@ export function LabourSection() {
 
   const fetchLabours = async () => {
     try {
-      setLoading(true);
       const res = await fetch(
         `${API_URL}/api/labour/all?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
       );
@@ -84,8 +91,6 @@ export function LabourSection() {
       else toast.error(data.error || "Failed to fetch workers");
     } catch {
       toast.error("Connection error");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -209,13 +214,77 @@ export function LabourSection() {
   const labourWorkers = labours.filter((w) => w.worker_type === "Labour");
   const contractors = labours.filter((w) => w.worker_type === "Contractor");
 
+  /* ================= LEDGER ================= */
+
+  const getDisplayName = (obj) => {
+    const name =
+      obj?.name ??
+      obj?.labour_name ??
+      obj?.worker_name ??
+      obj?.full_name ??
+      obj?.labour?.name ??
+      obj?.worker?.name;
+
+    return typeof name === "string" && name.trim().length > 0 ? name : "—";
+  };
+
+  const loadLedger = async (worker) => {
+    try {
+      setLedgerWorker(worker);
+      setLedgerOpen(true);
+      setLedgerLoading(true);
+
+      const res = await fetch(
+        `${API_URL}/api/labour/history/${worker.id}?company_id=${COMPANY_ID}&godown_id=${GODOWN_ID}`
+      );
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to load ledger");
+      }
+
+      setLedgerEntries(data.entries || []);
+      setLedgerTotals(data.totals || null);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to load ledger");
+      setLedgerOpen(false);
+      setLedgerWorker(null);
+      setLedgerEntries([]);
+      setLedgerTotals(null);
+    } finally {
+      setLedgerLoading(false);
+    }
+  };
+
+  const closeLedger = () => {
+    setLedgerOpen(false);
+    setLedgerWorker(null);
+    setLedgerEntries([]);
+    setLedgerTotals(null);
+  };
+
   /* ================= UI ================= */
+
+  // Mobile rendering helper: stacked key/value rows instead of desktop tables.
+  // Keeps business logic identical; only changes layout for < md.
+  const KV = ({ label, value, className = "" }) => (
+    <div className={`min-w-0 ${className}`}>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-sm text-gray-900 dark:text-white truncate">{value ?? "—"}</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      {/*
+        Mobile-first header:
+        - Stack actions vertically on phones.
+        - Keep a single row only on `sm+`.
+      */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-gray-900 dark:text-white mb-1">
             Labour & Contractor Register
@@ -225,26 +294,40 @@ export function LabourSection() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <OwnerReadOnlyBadge />
-          <Button onClick={fetchLabours} variant="outline">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div className="w-fit">
+            <OwnerReadOnlyBadge />
+          </div>
+
+          <Button onClick={fetchLabours} variant="outline" className="w-full sm:w-auto">
             <RefreshCcw className="w-4 h-4 mr-1" /> Refresh
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={() => setIsAddDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-1" /> Add Worker
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 w-max mb-4">
-          <TabsTrigger value="labour"><User className="w-4 h-4 mr-1" />Labours</TabsTrigger>
-          <TabsTrigger value="contractor"><Truck className="w-4 h-4 mr-1" />Contractors</TabsTrigger>
-          <TabsTrigger value="summary"><FileSpreadsheet className="w-4 h-4 mr-1" />Salary Summary</TabsTrigger>
+        {/*
+          Mobile UX fix:
+          - Avoid `w-max` which can force horizontal scrolling on long tab labels.
+          - Use full-width grid so tabs wrap/fit within viewport.
+        */}
+        <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsTrigger value="labour" className="text-xs sm:text-sm">
+            <User className="w-4 h-4 mr-1 hidden sm:inline" />Labours
+          </TabsTrigger>
+          <TabsTrigger value="contractor" className="text-xs sm:text-sm">
+            <Truck className="w-4 h-4 mr-1 hidden sm:inline" />Contractors
+          </TabsTrigger>
+          <TabsTrigger value="summary" className="text-xs sm:text-sm">
+            <FileSpreadsheet className="w-4 h-4 mr-1 hidden sm:inline" />Salary Summary
+          </TabsTrigger>
         </TabsList>
 
         {/* NOTEBOOK PAGE */}
-        <Card className="bg-[#fdfdfb] dark:bg-gray-900 border-l-4 border-red-300 shadow-md">
+        <Card className="bg-white dark:bg-gray-900 border-l-4 border-red-300 shadow-md">
           <CardHeader className="border-b bg-white dark:bg-gray-800">
             <CardTitle>
               {activeTab === "labour" && "Labour Register"}
@@ -256,64 +339,173 @@ export function LabourSection() {
           <CardContent className="pt-4">
             {/* LABOUR */}
             <TabsContent value="labour">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Daily Wage</TableHead>
-                    <TableHead>Monthly Salary</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {labourWorkers.map((w) => (
-                    <TableRow key={w.id}>
-                      <TableCell>{w.name}</TableCell>
-                      <TableCell>{w.contact}</TableCell>
-                      <TableCell>{w.role}</TableCell>
-                      <TableCell>{formatINR(w.daily_wage)}</TableCell>
-                      <TableCell>{formatINR(w.monthly_salary)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => openEditWorker(w)}>
-                          <Edit className="w-4 h-4 mr-1" /> Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {isDesktop ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Daily Wage</TableHead>
+                        <TableHead>Monthly Salary</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {labourWorkers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            No workers
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        labourWorkers.map((w) => (
+                          <TableRow key={w.id}>
+                            <TableCell>{w.name}</TableCell>
+                            <TableCell>{w.contact}</TableCell>
+                            <TableCell>{w.role}</TableCell>
+                            <TableCell>{formatINR(w.daily_wage)}</TableCell>
+                            <TableCell>{formatINR(w.monthly_salary)}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => loadLedger(w)}
+                                >
+                                  View History
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEditWorker(w)}
+                                >
+                                  <Edit className="w-4 h-4 mr-1" /> Edit
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {labourWorkers.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-6 text-center">No workers found</p>
+                  ) : (
+                    labourWorkers.map((w) => (
+                      <Card key={w.id} className="w-full">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 dark:text-white truncate">{w.name}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{w.role || "—"}</p>
+                            </div>
+                            <div className="shrink-0 flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => loadLedger(w)}
+                              >
+                                History
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditWorker(w)}
+                              >
+                                <Edit className="w-4 h-4 mr-1" /> Edit
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <KV label="Contact" value={w.contact} />
+                            <KV label="Daily Wage" value={formatINR(w.daily_wage)} />
+                            <KV
+                              label="Monthly Salary"
+                              value={formatINR(w.monthly_salary)}
+                              className="col-span-2"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             {/* CONTRACTOR */}
             <TabsContent value="contractor">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Per Kg Rate</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {contractors.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell>{c.name}</TableCell>
-                      <TableCell>{c.contact}</TableCell>
-                      <TableCell>{c.role}</TableCell>
-                      <TableCell>{formatINR(c.per_kg_rate)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => openEditWorker(c)}>
-                          <Edit className="w-4 h-4 mr-1" /> Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {isDesktop ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Per Kg Rate</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {contractors.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                            No contractors
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        contractors.map((c) => (
+                          <TableRow key={c.id}>
+                            <TableCell>{c.name}</TableCell>
+                            <TableCell>{c.contact}</TableCell>
+                            <TableCell>{c.role}</TableCell>
+                            <TableCell>{formatINR(c.per_kg_rate)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button size="sm" variant="outline" onClick={() => openEditWorker(c)}>
+                                <Edit className="w-4 h-4 mr-1" /> Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {contractors.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-6 text-center">No contractors found</p>
+                  ) : (
+                    contractors.map((c) => (
+                      <Card key={c.id} className="w-full">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 dark:text-white truncate">{c.name}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{c.role || "—"}</p>
+                            </div>
+                            <Button size="sm" variant="outline" onClick={() => openEditWorker(c)} className="shrink-0">
+                              <Edit className="w-4 h-4 mr-1" /> Edit
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <KV label="Contact" value={c.contact} />
+                            <KV label="Per Kg Rate" value={formatINR(c.per_kg_rate)} />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             {/* SUMMARY */}
@@ -321,32 +513,83 @@ export function LabourSection() {
               {summaryLoading ? (
                 <p className="text-center py-10">Loading…</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Joining Date</TableHead>
-                      <TableHead>Present Days</TableHead>
-                      <TableHead>Total Earned</TableHead>
-                      <TableHead>Total Paid</TableHead>
-                      <TableHead>Remaining</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salarySummary.map((r) => (
-                      <TableRow key={r.labour_id}>
-                        <TableCell>{r.labour_name}</TableCell>
-                        <TableCell>{new Date(r.joining_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{r.present_days}</TableCell>
-                        <TableCell>{formatINR(r.total_earned)}</TableCell>
-                        <TableCell>{formatINR(r.total_paid)}</TableCell>
-                        <TableCell className={r.net_balance >= 0 ? "text-green-600" : "text-red-600"}>
-                          {formatINR(r.net_balance)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  {isDesktop ? (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Joining Date</TableHead>
+                            <TableHead>Present Days</TableHead>
+                            <TableHead>Total Earned</TableHead>
+                            <TableHead>Total Paid</TableHead>
+                            <TableHead>Remaining</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {salarySummary.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                No summary
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            salarySummary.map((r) => (
+                              <TableRow key={r.labour_id}>
+                                <TableCell>{getDisplayName(r)}</TableCell>
+                                <TableCell>
+                                  {r.joining_date
+                                    ? new Date(r.joining_date).toLocaleDateString()
+                                    : "—"}
+                                </TableCell>
+                                <TableCell>{r.present_days}</TableCell>
+                                <TableCell>{formatINR(r.total_earned)}</TableCell>
+                                <TableCell>{formatINR(r.total_paid)}</TableCell>
+                                <TableCell className={r.net_balance >= 0 ? "text-green-600" : "text-red-600"}>
+                                  {formatINR(r.net_balance)}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {salarySummary.length === 0 ? (
+                        <p className="text-sm text-gray-500 py-6 text-center">No summary available</p>
+                      ) : (
+                        salarySummary.map((r) => (
+                          <Card key={r.labour_id} className="w-full">
+                            <CardContent className="p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-gray-900 dark:text-white truncate">{getDisplayName(r)}</p>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Joining: {r.joining_date ? new Date(r.joining_date).toLocaleDateString() : "—"}
+                                  </p>
+                                </div>
+                                <div className="shrink-0 text-right">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">Remaining</p>
+                                  <p className={`text-sm font-semibold ${r.net_balance >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                    {formatINR(r.net_balance)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <KV label="Present Days" value={r.present_days} />
+                                <KV label="Total Earned" value={formatINR(r.total_earned)} />
+                                <KV label="Total Paid" value={formatINR(r.total_paid)} />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </CardContent>
@@ -355,7 +598,7 @@ export function LabourSection() {
 
       {/* EDIT DIALOG (UNCHANGED LOGIC) */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Worker</DialogTitle>
           </DialogHeader>
@@ -398,7 +641,7 @@ export function LabourSection() {
 
       {/* ADD WORKER DIALOG */}
 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-  <DialogContent>
+  <DialogContent className="max-h-[90dvh] overflow-y-auto">
     <DialogHeader>
       <DialogTitle>Add Worker</DialogTitle>
     </DialogHeader>
@@ -509,6 +752,160 @@ export function LabourSection() {
     </DialogFooter>
   </DialogContent>
 </Dialog>
+
+      {/* LABOUR LEDGER MODAL */}
+      <ResizableHistoryModal
+        isOpen={ledgerOpen}
+        onClose={closeLedger}
+        title={ledgerWorker ? `Ledger — ${getDisplayName(ledgerWorker)}` : "Ledger"}
+        defaultWidth={isDesktop ? 1000 : 9999}
+        defaultHeight={isDesktop ? 650 : 9999}
+        contentStyle={{ resize: isDesktop ? "both" : "none" }}
+        contentClassName={
+          isDesktop
+            ? ""
+            : "!max-w-none !w-[100vw] !h-[100dvh] !max-h-none !rounded-none"
+        }
+      >
+        {ledgerLoading ? (
+          <p className="text-center py-8 text-gray-500">Loading…</p>
+        ) : !ledgerWorker ? (
+          <p className="text-center py-8 text-gray-500">No worker selected</p>
+        ) : (
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-4 grid grid-cols-2 gap-3">
+                <KV label="Name" value={getDisplayName(ledgerWorker)} />
+                <KV label="Role" value={ledgerWorker.role || "—"} />
+                <KV label="Contact" value={ledgerWorker.contact || "—"} />
+                <KV label="Daily Wage" value={formatINR(ledgerWorker.daily_wage)} />
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-gray-500">Total Earned</p>
+                  <p className="text-lg font-semibold">{formatINR(ledgerTotals?.total_earned)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-gray-500">Total Paid</p>
+                  <p className="text-lg font-semibold">{formatINR(ledgerTotals?.total_paid)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-gray-500">Remaining</p>
+                  <p className={`text-lg font-semibold ${(Number(ledgerTotals?.remaining || 0) >= 0) ? "text-green-600" : "text-red-600"}`}>
+                    {formatINR(Number(ledgerTotals?.remaining || 0))}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {ledgerEntries.length === 0 ? (
+              <p className="text-center py-8 text-gray-500">No transactions</p>
+            ) : isDesktop ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Mode</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Balance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+  {(() => {
+    let running = 0;
+
+    return ledgerEntries.map((e, idx) => {
+      const amt = Number(e.amount ?? 0);
+
+      // Decide balance effect safely
+      let delta = 0;
+      if (e.entry_type === "Salary") {
+        delta = amt;            // credit
+      } else if (e.entry_type === "Payment") {
+        delta = -amt;           // debit
+      } else {
+        // fallback for future entry types
+        delta = Number(e.delta ?? 0);
+      }
+
+      running += delta;
+
+      const isCredit = delta >= 0;
+
+      return (
+        <TableRow key={idx}>
+          <TableCell>
+            {e.date ? new Date(e.date).toLocaleDateString() : "—"}
+          </TableCell>
+
+          <TableCell>{e.entry_type || "—"}</TableCell>
+
+          <TableCell>{e.mode || "—"}</TableCell>
+
+          <TableCell
+            className={`text-right font-medium ${
+              isCredit ? "text-green-700" : "text-red-700"
+            }`}
+          >
+            {formatINR(amt)}
+          </TableCell>
+
+          <TableCell className="text-right font-semibold">
+            {formatINR(running)}
+          </TableCell>
+        </TableRow>
+      );
+    });
+  })()}
+</TableBody>
+
+                </Table>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(() => {
+                  let running = 0;
+                  return ledgerEntries.map((e, idx) => {
+                    const amt = Number(e.amount || 0);
+                    const isSalary = e.entry_type === "Salary";
+                    running += isSalary ? amt : -amt;
+                    return (
+                      <Card key={idx}>
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white">{e.entry_type}</p>
+                              <p className="text-xs text-gray-500">
+                                {e.date ? new Date(e.date).toLocaleDateString() : "—"}
+                                {e.mode ? ` — ${e.mode}` : ""}
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className={`text-sm font-semibold ${isSalary ? "text-green-700" : "text-red-700"}`}>
+                                {formatINR(amt)}
+                              </p>
+                              <p className="text-xs text-gray-500">Bal: {formatINR(running)}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  });
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+      </ResizableHistoryModal>
 
     </div>
   );

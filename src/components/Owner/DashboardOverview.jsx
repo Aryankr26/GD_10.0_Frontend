@@ -55,9 +55,9 @@ export default function DashboardOverview() {
     <div className="space-y-6">
 
       {/* ================= HEADER ================= */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-emerald-600">
+          <h2 className="text-lg sm:text-xl font-semibold text-emerald-600">
             Dashboard
           </h2>
           <p className="text-sm text-gray-500">
@@ -82,72 +82,72 @@ export default function DashboardOverview() {
       {!loading && data && (
         <>
           {/* ================= TOP METRICS ================= */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
             {/* SCRAP IN */}
             <Card className="border-green-200">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-green-600">Scrap In</CardTitle>
-                <ArrowDownCircle className="text-green-600" />
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                <CardTitle className="text-green-600 text-sm sm:text-base">Scrap In</CardTitle>
+                <ArrowDownCircle className="text-green-600 w-4 h-4 sm:w-5 sm:h-5" />
               </CardHeader>
-              <CardContent>
-                <div className="text-lg font-semibold">
-                  Today: {data.scrap_in.nd.toFixed(2)} Tons
+              <CardContent className="pt-0">
+                <div className="text-base sm:text-lg font-semibold">
+                  {data.scrap_in.nd.toFixed(2)} T
                 </div>
-                <p className="text-sm text-gray-500">
-                  Month: {data.scrap_in.mo.toFixed(2)} Tons
+                <p className="text-xs text-gray-500">
+                  Month: {data.scrap_in.mo.toFixed(2)} T
                 </p>
               </CardContent>
             </Card>
 
             {/* SCRAP OUT */}
             <Card className="border-blue-200">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-blue-600">Scrap Out</CardTitle>
-                <ArrowUpCircle className="text-blue-600" />
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                <CardTitle className="text-blue-600 text-sm sm:text-base">Scrap Out</CardTitle>
+                <ArrowUpCircle className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
               </CardHeader>
-              <CardContent>
-                <div className="text-lg font-semibold">
-                  Today: {data.scrap_out.nd.toFixed(2)} Tons
+              <CardContent className="pt-0">
+                <div className="text-base sm:text-lg font-semibold">
+                  {data.scrap_out.nd.toFixed(2)} T
                 </div>
-                <p className="text-sm text-gray-500">Mill Dispatch</p>
+                <p className="text-xs text-gray-500">Mill Dispatch</p>
               </CardContent>
             </Card>
 
             {/* CASH */}
             <Card className="border-orange-200">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-orange-600">Cash</CardTitle>
-                <Wallet className="text-orange-600" />
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                <CardTitle className="text-orange-600 text-sm sm:text-base">Cash</CardTitle>
+                <Wallet className="text-orange-600 w-4 h-4 sm:w-5 sm:h-5" />
               </CardHeader>
-              <CardContent>
-                <div className="text-lg font-semibold">
+              <CardContent className="pt-0">
+                <div className="text-base sm:text-lg font-semibold">
                   {formatINR(data.cash.rokadi)}
                 </div>
-                <p className="text-sm text-gray-500">Rokadi Balance</p>
+                <p className="text-xs text-gray-500">Rokadi</p>
               </CardContent>
             </Card>
 
             {/* BANK */}
             <Card className="border-purple-200">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-purple-600">Bank</CardTitle>
-                <Building2 className="text-purple-600" />
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                <CardTitle className="text-purple-600 text-sm sm:text-base">Bank</CardTitle>
+                <Building2 className="text-purple-600 w-4 h-4 sm:w-5 sm:h-5" />
               </CardHeader>
-              <CardContent>
-                <div className="text-lg font-semibold">
+              <CardContent className="pt-0">
+                <div className="text-base sm:text-lg font-semibold">
                   {formatINR(data.cash.bank)}
                 </div>
-                <p className="text-sm text-gray-500">Total Bank Balance</p>
+                <p className="text-xs text-gray-500">Total Bank</p>
               </CardContent>
             </Card>
           </div>
 
           {/* ================= EXPENSE ANALYTICS ================= */}
           <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle>Monthly Expense Summary</CardTitle>
-              <span className="text-sm text-gray-500">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle className="text-base sm:text-lg">Monthly Expense Summary</CardTitle>
+              <span className="text-xs sm:text-sm text-gray-500">
                 Current Month
               </span>
             </CardHeader>
@@ -189,7 +189,7 @@ export default function DashboardOverview() {
           {/* ================= SCRAP BY MATERIAL ================= */}
           <Card>
             <CardHeader>
-              <CardTitle>Scrap In by Category (Today)</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Scrap In by Category (Today)</CardTitle>
             </CardHeader>
             <CardContent>
               {data.scrap_by_material.length === 0 ? (
@@ -197,10 +197,10 @@ export default function DashboardOverview() {
                   No scrap received today
                 </p>
               ) : (
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   {data.scrap_by_material.map((m) => (
-                    <Badge key={m.material} variant="outline">
-                      {m.material}: {Number(m.weight).toFixed(2)} kg
+                    <Badge key={m.material} variant="outline" className="text-xs">
+                      {m.material}: {Number(m.weight).toFixed(1)} kg
                     </Badge>
                   ))}
                 </div>

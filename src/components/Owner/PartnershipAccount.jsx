@@ -9,8 +9,10 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Plus, Download, Pencil, Trash2, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { formatDate } from "../../utils/dateFormat";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 export function PartnershipAccount() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const getMonthlyWithdrawals = (withdrawals) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -62,17 +64,17 @@ export function PartnershipAccount() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">Partnership Account</h2>
-          <p className="text-gray-500 dark:text-gray-400">Manage partner withdrawals</p>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">Partnership Account</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Manage partner withdrawals</p>
         </div>
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Partner
+              <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add Partner</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -88,60 +90,48 @@ export function PartnershipAccount() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-gray-500 dark:text-gray-400">Total Partners</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-gray-900 dark:text-white">{partners.length}</div>
-          </CardContent>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <Card className="p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Partners</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{partners.length}</p>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-gray-500 dark:text-gray-400">Total Withdrawals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-gray-900 dark:text-white">₹{totalWithdrawn.toLocaleString()}</div>
-          </CardContent>
+        <Card className="p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Withdrawn</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">₹{totalWithdrawn.toLocaleString()}</p>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-gray-500 dark:text-gray-400">This Month (30 Days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-blue-600">₹{monthlyWithdrawals.toLocaleString()}</div>
-          </CardContent>
+        <Card className="p-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">This Month</p>
+          <p className="text-lg sm:text-2xl font-bold text-blue-600">₹{monthlyWithdrawals.toLocaleString()}</p>
         </Card>
       </div>
 
-      <div className="flex grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {partners.map((partner) => {
           const monthlyData = getMonthlyWithdrawals(partner.withdrawals);
           const monthlyTotal = monthlyData.reduce((sum, w) => sum + w.amount, 0);
 
           return (
             <Card key={partner.id}>
-              <CardHeader>
+              <CardHeader className="px-4 sm:px-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                       <AvatarFallback>
-                        <Users className="w-5 h-5" />
+                        <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="text-gray-900 dark:text-white">{partner.name}</h3>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">Partner ID: {partner.id}</p>
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">{partner.name}</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">ID: {partner.id}</p>
                     </div>
                   </div>
                   <Dialog>
@@ -230,51 +220,95 @@ export function PartnershipAccount() {
           <CardTitle>All Partner Withdrawals</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Partner Name</TableHead>
-                <TableHead>Total Withdrawn</TableHead>
-                <TableHead>This Month</TableHead>
-                <TableHead>Last Withdrawal</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          {isDesktop ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Partner Name</TableHead>
+                    <TableHead>Total Withdrawn</TableHead>
+                    <TableHead>This Month</TableHead>
+                    <TableHead>Last Withdrawal</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {partners.map((partner) => {
+                    const monthlyData = getMonthlyWithdrawals(partner.withdrawals);
+                    const monthlyTotal = monthlyData.reduce((sum, w) => sum + w.amount, 0);
+
+                    return (
+                      <TableRow key={partner.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-8 h-8">
+                              <AvatarFallback>
+                                <Users className="w-4 h-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            {partner.name}
+                          </div>
+                        </TableCell>
+                        <TableCell>₹{partner.totalWithdrawn.toLocaleString()}</TableCell>
+                        <TableCell className="text-blue-600">₹{monthlyTotal.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {partner.withdrawals.length > 0 ? formatDate(partner.withdrawals[0].date) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3">
               {partners.map((partner) => {
                 const monthlyData = getMonthlyWithdrawals(partner.withdrawals);
                 const monthlyTotal = monthlyData.reduce((sum, w) => sum + w.amount, 0);
+                const lastWithdrawalDate = partner.withdrawals.length > 0 ? formatDate(partner.withdrawals[0].date) : "-";
 
                 return (
-                  <TableRow key={partner.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback>
-                            <Users className="w-4 h-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        {partner.name}
+                  <Card key={partner.id} className="w-full">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-white truncate">{partner.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Last withdrawal: {lastWithdrawalDate}</p>
+                        </div>
+                        <div className="shrink-0 flex gap-2">
+                          <Button variant="outline" size="sm" aria-label={`Edit ${partner.name}`}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="destructive" size="sm" aria-label={`Delete ${partner.name}`}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>₹{partner.totalWithdrawn.toLocaleString()}</TableCell>
-                    <TableCell className="text-blue-600">₹{monthlyTotal.toLocaleString()}</TableCell>
-                    <TableCell>
-                      {partner.withdrawals.length > 0 ? formatDate(partner.withdrawals[0].date) : "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total Withdrawn</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">₹{partner.totalWithdrawn.toLocaleString()}</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">This Month</p>
+                          <p className="text-sm font-semibold text-blue-600 truncate">₹{monthlyTotal.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })}
-            </TableBody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

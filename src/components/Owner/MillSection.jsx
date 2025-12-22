@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  Card, CardHeader, CardTitle, CardContent, CardDescription
+  Card, CardHeader, CardTitle, CardContent
 } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -12,9 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Calendar, RefreshCcw, Plus, Download, Pencil, Trash2 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import { Calendar as CalendarComponent } from "../ui/calendar";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/dateFormat";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 const API_URL = "https://gd-10-0-backend-1.onrender.com";
 const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
@@ -30,9 +30,9 @@ const askConfirm = (message) =>
   });
 
 export function MillSection() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [sales, setSales] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
   // filterDate can be daily "YYYY-MM-DD" or monthly "YYYY-MM"
   //const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
 
@@ -117,13 +117,6 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
     // monthValue like "2025-11"
     if (!monthValue) return;
     setFilterDate(monthValue);
-    setSelectedDate(new Date(`${monthValue}-01`));
-  };
-
-  const handleDateSelect = (d) => {
-    if (!d) return;
-    setSelectedDate(d);
-    setFilterDate(d.toISOString().split("T")[0]);
   };
 
   /* =====================
@@ -348,21 +341,23 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
   return (
    <div className="space-y-6">
   {/* HEADER with Month Picker (Monthly Only) */}
-  <div className="flex items-center justify-between">
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
-      <h2 className="text-xl font-bold">Party / Mill Section</h2>
-      <p className="text-gray-500">Owner — Create sales & record payments</p>
+      <h2 className="text-lg sm:text-xl font-bold">Party / Mill Section</h2>
+      <p className="text-sm text-gray-500">Owner — Create sales & record payments</p>
     </div>
 
     <div className="flex items-center gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2">
             <Calendar className="w-4 h-4" />
-            {/* Display the currently selected month name */}
-            {/* filterDate will now always be YYYY-MM (e.g., "2025-12") */}
-            {/* Inside PopoverTrigger Button: */}
-            {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+            <span className="hidden sm:inline">
+              {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+            </span>
+            <span className="sm:hidden">
+              {new Date(`${filterDate}-01`).toLocaleDateString("en-IN", { month: "short", year: "2-digit" })}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-3 w-56">
@@ -392,50 +387,53 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
       
           <Button
             variant="outline"
+            size="sm"
             onClick={() => {
               fetchSales();
               fetchPayments();
             }}
           >
-            <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
+            <RefreshCcw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
 
       {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Total Invoice</CardTitle></CardHeader>
-          <CardContent className="text-blue-600 font-semibold">₹{totalInvoiceAmount.toLocaleString()}</CardContent>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="p-3">
+          <p className="text-xs text-gray-500">Total Invoice</p>
+          <p className="text-lg font-semibold text-blue-600">₹{totalInvoiceAmount.toLocaleString()}</p>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Payment Received</CardTitle></CardHeader>
-          <CardContent className="text-green-600 font-semibold">₹{totalReceived.toLocaleString()}</CardContent>
+        <Card className="p-3">
+          <p className="text-xs text-gray-500">Payment Received</p>
+          <p className="text-lg font-semibold text-green-600">₹{totalReceived.toLocaleString()}</p>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Pending Payment</CardTitle></CardHeader>
-          <CardContent className="text-orange-600 font-semibold">₹{pendingPayment.toLocaleString()}</CardContent>
+        <Card className="p-3">
+          <p className="text-xs text-gray-500">Pending Payment</p>
+          <p className="text-lg font-semibold text-orange-600">₹{pendingPayment.toLocaleString()}</p>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Sales Count</CardTitle></CardHeader>
-          <CardContent className="font-semibold">{sales.length} Entries</CardContent>
+        <Card className="p-3">
+          <p className="text-xs text-gray-500">Sales Count</p>
+          <p className="text-lg font-semibold">{sales.length} Entries</p>
         </Card>
       </div>
 
       {/* SALES TABLE + Add/Edit/Delete/Download */}
       <Card>
-        <CardHeader className="flex items-center justify-between">
-          <CardTitle>Maal Out (Sales)</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6">
+          <CardTitle className="text-base sm:text-lg">Maal Out (Sales)</CardTitle>
 
           <div className="flex items-center gap-2">
             {/* Add Sale */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-4 h-4 mr-2" /> Add Sale
+                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <Plus className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Sale</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
@@ -481,36 +479,34 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
         </CardHeader>
 
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Firm</TableHead>
-                  <TableHead>Bill To</TableHead>
-                  <TableHead>Ship To</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Weight</TableHead>
-                  <TableHead>Bill Rate</TableHead>
-                  <TableHead>Bill Amount</TableHead>
-                  <TableHead>Original Rate</TableHead>
-                  <TableHead>Original Amount</TableHead>
-                  <TableHead>GST %</TableHead>
-                  <TableHead>GST Amt</TableHead>
-                  <TableHead>Freight</TableHead>
-                  <TableHead>Freight Pay</TableHead>
-                  <TableHead>Total Invoice</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {sales.length === 0 ? (
+          {sales.length === 0 ? (
+            <p className="text-center py-6 text-gray-500">No sales found</p>
+          ) : isDesktop ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={16} className="text-center py-6">No sales found</TableCell>
+                    <TableHead>Firm</TableHead>
+                    <TableHead>Bill To</TableHead>
+                    <TableHead>Ship To</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Weight</TableHead>
+                    <TableHead>Bill Rate</TableHead>
+                    <TableHead>Bill Amount</TableHead>
+                    <TableHead>Original Rate</TableHead>
+                    <TableHead>Original Amount</TableHead>
+                    <TableHead>GST %</TableHead>
+                    <TableHead>GST Amt</TableHead>
+                    <TableHead>Freight</TableHead>
+                    <TableHead>Freight Pay</TableHead>
+                    <TableHead>Total Invoice</TableHead>
+                    <TableHead>Vehicle</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ) : (
-                  sales.map((s) => (
+                </TableHeader>
+
+                <TableBody>
+                  {sales.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell>{s.firm_name}</TableCell>
                       <TableCell>{s.bill_to}</TableCell>
@@ -529,111 +525,441 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
 
                       <TableCell>₹{s.freight}</TableCell>
                       <TableCell>
-                        {s.freight_payment_status === "paid"
-                          ? <span className="text-green-600 font-semibold">PAID</span>
-                          : <span className="text-red-600 font-semibold">PENDING</span>}
+                        {s.freight_payment_status === "paid" ? (
+                          <span className="text-green-600 font-semibold">PAID</span>
+                        ) : (
+                          <span className="text-red-600 font-semibold">PENDING</span>
+                        )}
                       </TableCell>
 
-                      <TableCell className="font-bold text-blue-600">₹{s.total_invoice_amount}</TableCell>
+                      <TableCell className="font-bold text-blue-600">
+                        ₹{s.total_invoice_amount}
+                      </TableCell>
 
                       <TableCell>{s.vehicle_no}</TableCell>
 
-                      <TableCell className="flex gap-2">
-                        {/* Edit Sale — clicking button pre-fills and opens dialog */}
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                // populate editSaleForm (copy)
-                                setEditSaleForm({
-                                  id: s.id,
-                                  firm_name: s.firm_name,
-                                  bill_to: s.bill_to,
-                                  ship_to: s.ship_to,
-                                  date: s.date,
-                                  weight: Number(s.weight) || 0,
-                                  bill_rate: Number(s.bill_rate) || 0,
-                                  original_rate: Number(s.original_rate) || 0,
-                                  gst_percent: Number(s.gst_percent) || 0,
-                                  freight: Number(s.freight) || 0,
-                                  vehicle_no: s.vehicle_no || "",
-                                  freight_payment_status: s.freight_payment_status || "pending",
-                                });
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {/* Edit Sale — clicking button pre-fills and opens dialog */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditSaleForm({
+                                    id: s.id,
+                                    firm_name: s.firm_name,
+                                    bill_to: s.bill_to,
+                                    ship_to: s.ship_to,
+                                    date: s.date,
+                                    weight: Number(s.weight) || 0,
+                                    bill_rate: Number(s.bill_rate) || 0,
+                                    original_rate: Number(s.original_rate) || 0,
+                                    gst_percent: Number(s.gst_percent) || 0,
+                                    freight: Number(s.freight) || 0,
+                                    vehicle_no: s.vehicle_no || "",
+                                    freight_payment_status:
+                                      s.freight_payment_status || "pending",
+                                  });
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
 
-                          <DialogContent className="max-w-3xl">
-                            <DialogHeader><DialogTitle>Edit Sale</DialogTitle></DialogHeader>
-                            {editSaleForm && (
-                              <form className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4" onSubmit={submitEditSale}>
-                                <div><Label>Firm Name</Label><Input required value={editSaleForm.firm_name} onChange={(e)=>setEditSaleForm({...editSaleForm, firm_name: e.target.value})} /></div>
-                                <div><Label>Bill To</Label><Input required value={editSaleForm.bill_to} onChange={(e)=>setEditSaleForm({...editSaleForm, bill_to: e.target.value})} /></div>
-                                <div><Label>Ship To</Label><Input value={editSaleForm.ship_to} onChange={(e)=>setEditSaleForm({...editSaleForm, ship_to: e.target.value})} /></div>
-                                <div><Label>Date</Label><Input type="date" required value={editSaleForm.date} onChange={(e)=>setEditSaleForm({...editSaleForm, date: e.target.value})} /></div>
-
-                                <div><Label>Vehicle No</Label><Input value={editSaleForm.vehicle_no} onChange={(e)=>setEditSaleForm({...editSaleForm, vehicle_no: e.target.value})} /></div>
-                                <div><Label>Weight (kg)</Label><Input type="number" required value={editSaleForm.weight} onChange={(e)=>setEditSaleForm({...editSaleForm, weight: Number(e.target.value)})} /></div>
-
-                                <div><Label>Bill Rate (₹/kg)</Label><Input type="number" required value={editSaleForm.bill_rate} onChange={(e)=>setEditSaleForm({...editSaleForm, bill_rate: Number(e.target.value)})} /></div>
-                                <div><Label>Original Rate (₹/kg)</Label><Input type="number" required value={editSaleForm.original_rate} onChange={(e)=>setEditSaleForm({...editSaleForm, original_rate: Number(e.target.value)})} /></div>
-
-                                <div><Label>GST %</Label><Input type="number" value={editSaleForm.gst_percent} onChange={(e)=>setEditSaleForm({...editSaleForm, gst_percent: Number(e.target.value)})} /></div>
-                                <div><Label>Freight (₹)</Label><Input type="number" value={editSaleForm.freight} onChange={(e)=>setEditSaleForm({...editSaleForm, freight: Number(e.target.value)})} /></div>
-
-                                <div>
-                                  <Label>Freight Payment Status</Label>
-                                  <Select value={editSaleForm.freight_payment_status} onValueChange={(v)=>setEditSaleForm({...editSaleForm, freight_payment_status: v})}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="paid">Paid</SelectItem>
-                                      <SelectItem value="pending">Pending</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="col-span-2 p-3 border rounded bg-gray-50">
-                                  <p>Bill Amount: ₹{(editSaleForm.weight * editSaleForm.bill_rate).toLocaleString()}</p>
-                                  <p>Original Amount: ₹{(editSaleForm.weight * editSaleForm.original_rate).toLocaleString()}</p>
-                                  <p>GST Amount: ₹{(((editSaleForm.weight * editSaleForm.bill_rate) * editSaleForm.gst_percent) / 100).toLocaleString()}</p>
-                                </div>
-
-                                <div className="col-span-2 flex justify-between pt-2">
+                            <DialogContent className="max-w-3xl">
+                              <DialogHeader>
+                                <DialogTitle>Edit Sale</DialogTitle>
+                              </DialogHeader>
+                              {editSaleForm && (
+                                <form
+                                  className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4"
+                                  onSubmit={submitEditSale}
+                                >
                                   <div>
-                                    <Button type="button" variant="destructive" onClick={async () => { if (await askConfirm("Delete this sale?")) { await handleDeleteSale(editSaleForm.id); /* close dialog after deletion */ setEditSaleForm(null); } }}>
-                                      Delete
-                                    </Button>
+                                    <Label>Firm Name</Label>
+                                    <Input
+                                      required
+                                      value={editSaleForm.firm_name}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          firm_name: e.target.value,
+                                        })
+                                      }
+                                    />
                                   </div>
-                                  <div className="flex gap-2">
-                                    <Button type="button" variant="outline" onClick={() => setEditSaleForm(null)}>Cancel</Button>
-                                    <Button type="submit">Save</Button>
+                                  <div>
+                                    <Label>Bill To</Label>
+                                    <Input
+                                      required
+                                      value={editSaleForm.bill_to}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          bill_to: e.target.value,
+                                        })
+                                      }
+                                    />
                                   </div>
-                                </div>
-                              </form>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                                  <div>
+                                    <Label>Ship To</Label>
+                                    <Input
+                                      value={editSaleForm.ship_to}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          ship_to: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Date</Label>
+                                    <Input
+                                      type="date"
+                                      required
+                                      value={editSaleForm.date}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          date: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
 
-                        {/* Download */}
-                        <Button size="sm" variant="ghost" onClick={() => handleDownloadInvoice(s.id)}>
-                          <Download className="h-4 w-4" />
-                        </Button>
+                                  <div>
+                                    <Label>Vehicle No</Label>
+                                    <Input
+                                      value={editSaleForm.vehicle_no}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          vehicle_no: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Weight (kg)</Label>
+                                    <Input
+                                      type="number"
+                                      required
+                                      value={editSaleForm.weight}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          weight: Number(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
 
-                        {/* Delete (quick) */}
-                        <Button size="sm" variant="ghost" onClick={() => handleDeleteSale(s.id)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
+                                  <div>
+                                    <Label>Bill Rate (₹/kg)</Label>
+                                    <Input
+                                      type="number"
+                                      required
+                                      value={editSaleForm.bill_rate}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          bill_rate: Number(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Original Rate (₹/kg)</Label>
+                                    <Input
+                                      type="number"
+                                      required
+                                      value={editSaleForm.original_rate}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          original_rate: Number(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label>GST %</Label>
+                                    <Input
+                                      type="number"
+                                      value={editSaleForm.gst_percent}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          gst_percent: Number(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Freight (₹)</Label>
+                                    <Input
+                                      type="number"
+                                      value={editSaleForm.freight}
+                                      onChange={(e) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          freight: Number(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <Label>Freight Payment Status</Label>
+                                    <Select
+                                      value={editSaleForm.freight_payment_status}
+                                      onValueChange={(v) =>
+                                        setEditSaleForm({
+                                          ...editSaleForm,
+                                          freight_payment_status: v,
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="paid">Paid</SelectItem>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="col-span-2 p-3 border rounded bg-gray-50">
+                                    <p>
+                                      Bill Amount: ₹
+                                      {(
+                                        editSaleForm.weight * editSaleForm.bill_rate
+                                      ).toLocaleString()}
+                                    </p>
+                                    <p>
+                                      Original Amount: ₹
+                                      {(
+                                        editSaleForm.weight *
+                                        editSaleForm.original_rate
+                                      ).toLocaleString()}
+                                    </p>
+                                    <p>
+                                      GST Amount: ₹
+                                      {(
+                                        ((editSaleForm.weight * editSaleForm.bill_rate) *
+                                          editSaleForm.gst_percent) /
+                                        100
+                                      ).toLocaleString()}
+                                    </p>
+                                  </div>
+
+                                  <div className="col-span-2 flex justify-between pt-2">
+                                    <div>
+                                      <Button
+                                        type="button"
+                                        variant="destructive"
+                                        onClick={async () => {
+                                          if (await askConfirm("Delete this sale?")) {
+                                            await handleDeleteSale(editSaleForm.id);
+                                            setEditSaleForm(null);
+                                          }
+                                        }}
+                                      >
+                                        Delete
+                                      </Button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setEditSaleForm(null)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button type="submit">Save</Button>
+                                    </div>
+                                  </div>
+                                </form>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+
+                          {/* Download */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDownloadInvoice(s.id)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+
+                          {/* Delete (quick) */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteSale(s.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sales.map((s) => (
+                <Card key={s.id} className="border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <CardTitle className="text-base truncate">
+                          {s.firm_name}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">
+                          {formatDate(s.date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-blue-600">
+                          ₹{Number(s.total_invoice_amount || 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">Total Invoice</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-xs text-gray-500">Bill To</div>
+                        <div className="font-medium break-words">{s.bill_to || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">Vehicle</div>
+                        <div className="font-medium break-words">{s.vehicle_no || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">Weight</div>
+                        <div className="font-medium">{s.weight} kg</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">Freight</div>
+                        <div className="font-medium">₹{Number(s.freight || 0).toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex justify-end gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditSaleForm({
+                                id: s.id,
+                                firm_name: s.firm_name,
+                                bill_to: s.bill_to,
+                                ship_to: s.ship_to,
+                                date: s.date,
+                                weight: Number(s.weight) || 0,
+                                bill_rate: Number(s.bill_rate) || 0,
+                                original_rate: Number(s.original_rate) || 0,
+                                gst_percent: Number(s.gst_percent) || 0,
+                                freight: Number(s.freight) || 0,
+                                vehicle_no: s.vehicle_no || "",
+                                freight_payment_status:
+                                  s.freight_payment_status || "pending",
+                              });
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                          </Button>
+                        </DialogTrigger>
+
+                        <DialogContent className="max-w-3xl">
+                          <DialogHeader>
+                            <DialogTitle>Edit Sale</DialogTitle>
+                          </DialogHeader>
+                          {editSaleForm && (
+                            <form
+                              className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4"
+                              onSubmit={submitEditSale}
+                            >
+                              <div><Label>Firm Name</Label><Input required value={editSaleForm.firm_name} onChange={(e)=>setEditSaleForm({...editSaleForm, firm_name: e.target.value})} /></div>
+                              <div><Label>Bill To</Label><Input required value={editSaleForm.bill_to} onChange={(e)=>setEditSaleForm({...editSaleForm, bill_to: e.target.value})} /></div>
+                              <div><Label>Ship To</Label><Input value={editSaleForm.ship_to} onChange={(e)=>setEditSaleForm({...editSaleForm, ship_to: e.target.value})} /></div>
+                              <div><Label>Date</Label><Input type="date" required value={editSaleForm.date} onChange={(e)=>setEditSaleForm({...editSaleForm, date: e.target.value})} /></div>
+
+                              <div><Label>Vehicle No</Label><Input value={editSaleForm.vehicle_no} onChange={(e)=>setEditSaleForm({...editSaleForm, vehicle_no: e.target.value})} /></div>
+                              <div><Label>Weight (kg)</Label><Input type="number" required value={editSaleForm.weight} onChange={(e)=>setEditSaleForm({...editSaleForm, weight: Number(e.target.value)})} /></div>
+
+                              <div><Label>Bill Rate (₹/kg)</Label><Input type="number" required value={editSaleForm.bill_rate} onChange={(e)=>setEditSaleForm({...editSaleForm, bill_rate: Number(e.target.value)})} /></div>
+                              <div><Label>Original Rate (₹/kg)</Label><Input type="number" required value={editSaleForm.original_rate} onChange={(e)=>setEditSaleForm({...editSaleForm, original_rate: Number(e.target.value)})} /></div>
+
+                              <div><Label>GST %</Label><Input type="number" value={editSaleForm.gst_percent} onChange={(e)=>setEditSaleForm({...editSaleForm, gst_percent: Number(e.target.value)})} /></div>
+                              <div><Label>Freight (₹)</Label><Input type="number" value={editSaleForm.freight} onChange={(e)=>setEditSaleForm({...editSaleForm, freight: Number(e.target.value)})} /></div>
+
+                              <div>
+                                <Label>Freight Payment Status</Label>
+                                <Select value={editSaleForm.freight_payment_status} onValueChange={(v)=>setEditSaleForm({...editSaleForm, freight_payment_status: v})}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="paid">Paid</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="col-span-2 p-3 border rounded bg-gray-50">
+                                <p>Bill Amount: ₹{(editSaleForm.weight * editSaleForm.bill_rate).toLocaleString()}</p>
+                                <p>Original Amount: ₹{(editSaleForm.weight * editSaleForm.original_rate).toLocaleString()}</p>
+                                <p>GST Amount: ₹{(((editSaleForm.weight * editSaleForm.bill_rate) * editSaleForm.gst_percent) / 100).toLocaleString()}</p>
+                              </div>
+
+                              <div className="col-span-2 flex justify-between pt-2">
+                                <div>
+                                  <Button type="button" variant="destructive" onClick={async () => { if (await askConfirm("Delete this sale?")) { await handleDeleteSale(editSaleForm.id); setEditSaleForm(null); } }}>
+                                    Delete
+                                  </Button>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button type="button" variant="outline" onClick={() => setEditSaleForm(null)}>Cancel</Button>
+                                  <Button type="submit">Save</Button>
+                                </div>
+                              </div>
+                            </form>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownloadInvoice(s.id)}
+                      >
+                        <Download className="w-4 h-4 mr-2" /> Invoice
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteSale(s.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -664,34 +990,193 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
         </CardHeader>
 
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Firm</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {payments.length === 0 ? (
+          {payments.length === 0 ? (
+            <p className="text-center py-6 text-gray-500">No payments found</p>
+          ) : isDesktop ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">No payments found</TableCell>
+                    <TableHead>Firm</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ) : (
-                  payments.map((p) => (
+                </TableHeader>
+
+                <TableBody>
+                  {payments.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>{p.firm_name}</TableCell>
-                      <TableCell className="text-green-600 font-semibold">₹{p.amount}</TableCell>
+                      <TableCell className="text-green-600 font-semibold">
+                        ₹{p.amount}
+                      </TableCell>
                       <TableCell>{formatDate(p.date)}</TableCell>
 
-                      <TableCell className="flex gap-2">
-                        {/* Edit Payment */}
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="ghost" onClick={()=> {
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {/* Edit Payment */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditPaymentForm({
+                                    id: p.id,
+                                    firm_name: p.firm_name,
+                                    amount: Number(p.amount) || 0,
+                                    date: p.date,
+                                    maal_out_id: p.maal_out_id ?? null,
+                                    mode: p.mode ?? null,
+                                    note: p.note ?? null,
+                                  });
+                                }}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+
+                            <DialogContent className="max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Edit Payment</DialogTitle>
+                              </DialogHeader>
+                              {editPaymentForm && (
+                                <form
+                                  onSubmit={submitEditPayment}
+                                  className="space-y-3 p-4"
+                                >
+                                  <div>
+                                    <Label>Firm Name</Label>
+                                    <Input
+                                      required
+                                      value={editPaymentForm.firm_name}
+                                      onChange={(e) =>
+                                        setEditPaymentForm({
+                                          ...editPaymentForm,
+                                          firm_name: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Amount (₹)</Label>
+                                    <Input
+                                      type="number"
+                                      required
+                                      value={editPaymentForm.amount}
+                                      onChange={(e) =>
+                                        setEditPaymentForm({
+                                          ...editPaymentForm,
+                                          amount: Number(e.target.value),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Date</Label>
+                                    <Input
+                                      type="date"
+                                      required
+                                      value={editPaymentForm.date}
+                                      onChange={(e) =>
+                                        setEditPaymentForm({
+                                          ...editPaymentForm,
+                                          date: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Note</Label>
+                                    <Input
+                                      value={editPaymentForm.note || ""}
+                                      onChange={(e) =>
+                                        setEditPaymentForm({
+                                          ...editPaymentForm,
+                                          note: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="flex justify-between pt-2">
+                                    <div>
+                                      <Button
+                                        type="button"
+                                        variant="destructive"
+                                        onClick={async () => {
+                                          if (await askConfirm("Delete this payment?")) {
+                                            await handleDeletePayment(editPaymentForm.id);
+                                            setEditPaymentForm(null);
+                                          }
+                                        }}
+                                      >
+                                        Delete
+                                      </Button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setEditPaymentForm(null)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button type="submit">Save</Button>
+                                    </div>
+                                  </div>
+                                </form>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+
+                          {/* Delete quick */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeletePayment(p.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {payments.map((p) => (
+                <Card key={p.id} className="border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <CardTitle className="text-base truncate">
+                          {p.firm_name}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">
+                          {formatDate(p.date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-green-600">
+                          ₹{Number(p.amount || 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">Received</div>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-0">
+                    <div className="mt-2 flex justify-end gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
                               setEditPaymentForm({
                                 id: p.id,
                                 firm_name: p.firm_name,
@@ -701,47 +1186,50 @@ const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7
                                 mode: p.mode ?? null,
                                 note: p.note ?? null,
                               });
-                            }}>
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                          </Button>
+                        </DialogTrigger>
 
-                          <DialogContent className="max-w-md">
-                            <DialogHeader><DialogTitle>Edit Payment</DialogTitle></DialogHeader>
-                            {editPaymentForm && (
-                              <form onSubmit={submitEditPayment} className="space-y-3 p-4">
-                                <div><Label>Firm Name</Label><Input required value={editPaymentForm.firm_name} onChange={(e)=>setEditPaymentForm({...editPaymentForm, firm_name: e.target.value})} /></div>
-                                <div><Label>Amount (₹)</Label><Input type="number" required value={editPaymentForm.amount} onChange={(e)=>setEditPaymentForm({...editPaymentForm, amount: Number(e.target.value)})} /></div>
-                                <div><Label>Date</Label><Input type="date" required value={editPaymentForm.date} onChange={(e)=>setEditPaymentForm({...editPaymentForm, date: e.target.value})} /></div>
-                                <div><Label>Note</Label><Input value={editPaymentForm.note || ""} onChange={(e)=>setEditPaymentForm({...editPaymentForm, note: e.target.value})} /></div>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader><DialogTitle>Edit Payment</DialogTitle></DialogHeader>
+                          {editPaymentForm && (
+                            <form onSubmit={submitEditPayment} className="space-y-3 p-4">
+                              <div><Label>Firm Name</Label><Input required value={editPaymentForm.firm_name} onChange={(e)=>setEditPaymentForm({...editPaymentForm, firm_name: e.target.value})} /></div>
+                              <div><Label>Amount (₹)</Label><Input type="number" required value={editPaymentForm.amount} onChange={(e)=>setEditPaymentForm({...editPaymentForm, amount: Number(e.target.value)})} /></div>
+                              <div><Label>Date</Label><Input type="date" required value={editPaymentForm.date} onChange={(e)=>setEditPaymentForm({...editPaymentForm, date: e.target.value})} /></div>
+                              <div><Label>Note</Label><Input value={editPaymentForm.note || ""} onChange={(e)=>setEditPaymentForm({...editPaymentForm, note: e.target.value})} /></div>
 
-                                <div className="flex justify-between pt-2">
-                                  <div>
-                                    <Button type="button" variant="destructive" onClick={async () => { if (await askConfirm("Delete this payment?")) { await handleDeletePayment(editPaymentForm.id); setEditPaymentForm(null); } }}>
-                                      Delete
-                                    </Button>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button type="button" variant="outline" onClick={()=>setEditPaymentForm(null)}>Cancel</Button>
-                                    <Button type="submit">Save</Button>
-                                  </div>
+                              <div className="flex justify-between pt-2">
+                                <div>
+                                  <Button type="button" variant="destructive" onClick={async () => { if (await askConfirm("Delete this payment?")) { await handleDeletePayment(editPaymentForm.id); setEditPaymentForm(null); } }}>
+                                    Delete
+                                  </Button>
                                 </div>
-                              </form>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                                <div className="flex gap-2">
+                                  <Button type="button" variant="outline" onClick={()=>setEditPaymentForm(null)}>Cancel</Button>
+                                  <Button type="submit">Save</Button>
+                                </div>
+                              </div>
+                            </form>
+                          )}
+                        </DialogContent>
+                      </Dialog>
 
-                        {/* Delete quick */}
-                        <Button size="sm" variant="ghost" onClick={() => handleDeletePayment(p.id)}>
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeletePayment(p.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

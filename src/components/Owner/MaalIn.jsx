@@ -23,10 +23,12 @@ import { Calendar as CalendarComponent } from "../ui/calendar";
 import { Calendar, RefreshCcw } from "lucide-react";
 import { formatDate } from "../../utils/dateFormat";
 import { toast } from "sonner";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 const API_URL = "https://gd-10-0-backend-1.onrender.com";
 
 export default function MaalIn() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [maalIn, setMaalIn] = useState([]);
   const [summary, setSummary] = useState({
     totalWeight: 0,
@@ -104,6 +106,8 @@ export default function MaalIn() {
 
   useEffect(() => {
     fetchMaalIn();
+    // NOTE: fetchMaalIn is declared inline and intentionally not added to deps to avoid re-creating the function and re-fetching unnecessarily.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDate]);
 
   const handleDateSelect = (date) => {
@@ -116,20 +120,25 @@ export default function MaalIn() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">
-            Maal In Records (Owner)
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Maal In Records
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Read-only view of all Maal In entries
           </p>
         </div>
 
-        <div className="flex gap-2">
+        {/*
+          Mobile-first actions:
+          - Avoid squeezing / wrapping into a horizontal-scroll row.
+          - Full-width buttons on mobile, inline only on `sm+`.
+        */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 w-full sm:w-auto justify-start">
                 <Calendar className="w-4 h-4" />
                 {formatDate(filterDate)}
               </Button>
@@ -143,15 +152,15 @@ export default function MaalIn() {
             </PopoverContent>
           </Popover>
 
-          <Button variant="outline" onClick={fetchMaalIn}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
+          <Button variant="outline" size="sm" onClick={fetchMaalIn} className="w-full sm:w-auto">
+            <RefreshCcw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
 
       {/* SUMMARY CARDS */}
-      <div className="flex grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Total Weight</CardTitle>
@@ -179,45 +188,93 @@ export default function MaalIn() {
         </CardHeader>
 
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Material</TableHead>
-                  <TableHead>Weight</TableHead>
-                  <TableHead>Rate</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Source</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {maalIn.length === 0 ? (
+          {/*
+            Mobile UX fix:
+            - Replace desktop table with stacked cards on < md.
+            - Keep table only on md+.
+            - No horizontal scrolling on phones.
+          */}
+          {isDesktop ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6">
-                      No records found
-                    </TableCell>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Material</TableHead>
+                    <TableHead>Weight</TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Source</TableHead>
                   </TableRow>
-                ) : (
-                  maalIn.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell>{formatDate(m.date)}</TableCell>
-                      <TableCell>{m.material}</TableCell>
-                      <TableCell>{m.weight}</TableCell>
-                      <TableCell>₹{m.rate}</TableCell>
-                      <TableCell className="text-green-600 font-semibold">
-                        ₹{m.amount}
+                </TableHeader>
+
+                <TableBody>
+                  {maalIn.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-6">
+                        No records found
                       </TableCell>
-                      <TableCell>{m.supplier}</TableCell>
-                      <TableCell>{m.source}</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    maalIn.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell>{formatDate(m.date)}</TableCell>
+                        <TableCell>{m.material}</TableCell>
+                        <TableCell>{m.weight}</TableCell>
+                        <TableCell>₹{m.rate}</TableCell>
+                        <TableCell className="text-green-600 font-semibold">₹{m.amount}</TableCell>
+                        <TableCell>{m.supplier}</TableCell>
+                        <TableCell>{m.source}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {maalIn.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No records found</p>
+              ) : (
+                maalIn.map((m) => (
+                  <Card key={m.id} className="w-full">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-white truncate">{m.material}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{formatDate(m.date)}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
+                          <p className="text-sm font-semibold text-green-600">₹{Number(m.amount || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Weight</p>
+                          <p className="text-sm text-gray-900 dark:text-white truncate">{m.weight} KG</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Rate</p>
+                          <p className="text-sm text-gray-900 dark:text-white truncate">₹{m.rate}</p>
+                        </div>
+                        <div className="min-w-0 col-span-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Supplier</p>
+                          <p className="text-sm text-gray-900 dark:text-white truncate">{m.supplier || "—"}</p>
+                        </div>
+                        <div className="min-w-0 col-span-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Source</p>
+                          <p className="text-sm text-gray-900 dark:text-white truncate">{m.source || "—"}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

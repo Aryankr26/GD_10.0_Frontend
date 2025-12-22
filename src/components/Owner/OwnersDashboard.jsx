@@ -56,30 +56,34 @@ export function OwnersDashboard() {
   const [millTab, setMillTab] = useState("mill");
 
   return (
-   <div className="min-h-screen bg-gray-50 flex flex-col">
-  {/* ================= HEADER ================= */}
-  <div className="sticky top-0 z-40 bg-white px-4 py-4 flex justify-between items-center shadow-sm">
-    <div>
-     <h1 className="text-xl font-bold tracking-wide text-emerald-600">
+    <div className="min-h-[100dvh] bg-gray-50 flex flex-col overflow-x-hidden">
+      {/* ================= HEADER ================= */}
+      <div className="sticky top-0 z-40 bg-white px-4 py-4 flex justify-between items-center shadow-sm">
+          <div>
+            <h1 className="text-xl font-bold tracking-wide text-emerald-600">
             Scrap<span className="text-gray-800">Co</span>
           </h1>
-      <p className="text-xs text-gray-600 mt-1 font-medium">
-        Owner Dashboard
-      </p>
-    </div>
+            <p className="text-xs text-gray-600 mt-1 font-medium">Owner Dashboard</p>
+          </div>
 
-        <Button
-          size="icon"
-          variant="ghost"
-          className="text-black hover:bg-white/20"
-          onClick={() => setActiveTab("settings")}
-        >
-          <Settings />
-        </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="text-black hover:bg-white/20"
+            onClick={() => setActiveTab("settings")}
+          >
+            <Settings />
+          </Button>
       </div>
 
       {/* ================= CONTENT ================= */}
-      <div className="flex-1 overflow-y-auto pb-24 p-4">
+      {/*
+        Mobile UX fix:
+        - Remove nested scroll container (was `overflow-y-auto`) to avoid "scroll inside scroll" on phones.
+        - Keep ONLY one vertical scroll (the page/body).
+        - Add safe bottom padding so fixed bottom-nav never overlaps content.
+      */}
+      <div className="flex-1 p-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
 
         {/* DASHBOARD */}
         {activeTab === "dashboard" && <DashboardOverview />}
@@ -173,8 +177,8 @@ export function OwnersDashboard() {
       </div>
 
       {/* ================= BOTTOM NAV (MOBILE STYLE) ================= */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md">
-        <div className="flex justify-around py-2">
+      <div className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-white border-t shadow-md pb-[env(safe-area-inset-bottom)]">
+        <div className="h-full flex items-center justify-around px-2">
 
           <NavBtn
             active={activeTab === "labour"}

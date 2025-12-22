@@ -1,28 +1,46 @@
 "use client";
 
 import * as React from "react";
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible@1.1.3";
 
-function Collapsible(props) {
-  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />;
-}
+/**
+ * Minimal, predictable Collapsible
+ * - No prop cloning magic
+ * - No animation traps
+ * - No event interception
+ * - Safe with shadcn / cards / tabs
+ */
 
-function CollapsibleTrigger(props) {
+function Collapsible({ open, children }) {
   return (
-    <CollapsiblePrimitive.CollapsibleTrigger
-      data-slot="collapsible-trigger"
-      {...props}
-    />
+    <div data-state={open ? "open" : "closed"} className="w-full">
+      {children}
+    </div>
   );
 }
 
-function CollapsibleContent(props) {
+function CollapsibleTrigger({ onClick, children, ...props }) {
   return (
-    <CollapsiblePrimitive.CollapsibleContent
-      data-slot="collapsible-content"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(e);
+        }
+      }}
+      className="cursor-pointer select-none"
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
+}
+
+function CollapsibleContent({ open, children }) {
+  if (!open) return null;
+  return <div>{children}</div>;
 }
 
 export { Collapsible, CollapsibleTrigger, CollapsibleContent };

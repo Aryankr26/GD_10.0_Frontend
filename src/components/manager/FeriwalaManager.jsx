@@ -16,7 +16,6 @@ const API_URL = process.env.REACT_APP_API_URL || "https://gd-10-0-backend-1.onre
 
 
 export function FeriwalaManager() {
-  const [feriwalaRecords, setFeriwalaRecords] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
 
   const [vendors, setVendors] = useState([]);
@@ -44,7 +43,6 @@ export function FeriwalaManager() {
   useEffect(() => {
     loadVendors();
     loadMaterials();
-    loadRecords();
   }, []);
 
   /* ================================
@@ -69,18 +67,6 @@ export function FeriwalaManager() {
       if (data.success) setScrapTypes(data.materials);
     } catch (err) {
       toast.error("Failed to load scrap types");
-    }
-  };
-
-  const loadRecords = async () => {
-    try {
-      const res = await fetch(
-        `${API_URL}/api/feriwala/list?company_id=${company_id}&godown_id=${godown_id}`
-      );
-      const data = await res.json();
-      if (data.success) setFeriwalaRecords(data.records || []);
-    } catch (err) {
-      toast.error("Failed to load feriwala records");
     }
   };
 
@@ -156,7 +142,6 @@ export function FeriwalaManager() {
       const data = await res.json();
       if (data.success) {
         toast.success("Feriwala purchase added!");
-        loadRecords();
         resetForm();
       } else toast.error(data.error);
     } catch (err) {
@@ -215,23 +200,24 @@ export function FeriwalaManager() {
   ================================ */
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
      
       {/* PURCHASE FORM */}
       <Card>
-        <CardHeader>
-          <div className="flex justify-between">
-            <CardTitle>Add Feriwala Purchase</CardTitle>
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg">Add Feriwala Purchase</CardTitle>
             {!isAdding && (
-              <Button onClick={() => setIsAdding(true)}>
-                <Plus /> Add
+              <Button size="sm" onClick={() => setIsAdding(true)}>
+                <Plus className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Add</span>
               </Button>
             )}
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           {isAdding && (
             <form className="space-y-4" onSubmit={handleSubmit}>
               {/* SELECT FERIWALA */}

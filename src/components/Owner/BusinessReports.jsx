@@ -203,21 +203,22 @@ export function BusinessReports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">Business Reports</h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            Comprehensive analytics and business insights
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">Business Reports</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Comprehensive analytics and insights
           </p>
         </div>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Download className="w-4 h-4 mr-2" />
-          Export Reports
+        <Button size="sm" className="bg-green-600 hover:bg-green-700 w-fit">
+          <Download className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Export Reports</span>
+          <span className="sm:hidden">Export</span>
         </Button>
       </div>
 
       {/* Summary Cards */}
-      <div className="flex grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
@@ -287,7 +288,7 @@ export function BusinessReports() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Total Maal In Chart */}
         <Card>
           <CardHeader>

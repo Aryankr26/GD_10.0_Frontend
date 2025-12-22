@@ -1,5 +1,7 @@
 // UPDATED FULL WORKING FILE: KabadiwalaManager.jsx
 
+/* eslint-disable no-unused-vars */
+
 import React, { useEffect, useState } from "react";
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle
@@ -346,19 +348,20 @@ export function KabadiwalaManager() {
 */}
    {/* PURCHASE FORM (Same as Feriwala but for Kabadiwala) */}
 <Card>
-  <CardHeader>
-    <div className="flex justify-between">
-      <CardTitle>Add Kabadiwala Purchase</CardTitle>
+  <CardHeader className="px-4 sm:px-6">
+    <div className="flex justify-between items-center">
+      <CardTitle className="text-lg">Add Kabadiwala Purchase</CardTitle>
 
       {!isAdding && (
-        <Button onClick={() => setIsAdding(true)}>
-          <Plus className="mr-2" /> Add Purchase
+        <Button size="sm" onClick={() => setIsAdding(true)}>
+          <Plus className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Add Purchase</span>
         </Button>
       )}
     </div>
   </CardHeader>
 
-  <CardContent>
+  <CardContent className="px-4 sm:px-6">
     {isAdding && (
       <form className="space-y-4" onSubmit={handleSubmit}>
 
@@ -397,7 +400,7 @@ export function KabadiwalaManager() {
         <Label>Scrap Items</Label>
 
         {form.scraps.map((row, i) => (
-          <div key={i} className="grid grid-cols-5 gap-3 items-center">
+          <div key={i} className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 items-center p-2 bg-gray-50 rounded-lg sm:bg-transparent sm:p-0">
 
             {/* Material */}
             <select

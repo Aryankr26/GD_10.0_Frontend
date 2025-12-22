@@ -1,5 +1,4 @@
 import React from 'react';
-import { Lock } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 
 export function OwnerReadOnlyBadge() {

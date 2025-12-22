@@ -15,9 +15,6 @@ function AppContent() {
   // 🔑 Owner section state (SINGLE SOURCE OF TRUTH)
   const [activeSection, setActiveSection] = useState("dashboard");
 
-  // 🌙 Dark mode (optional, kept)
-  const [darkMode, setDarkMode] = useState(false);
-
   if (!isAuthenticated) {
     return <Login />;
   }

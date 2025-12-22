@@ -16,18 +16,20 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { RefreshCcw, FileDown, X } from "lucide-react";
+import { RefreshCcw, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/dateFormat";
+import { useMediaQuery } from "../../utils/useMediaQuery";
+import { ResizableHistoryModal } from "./ResizableHistoryModal";
 
 const API_URL = "https://gd-10-0-backend-1.onrender.com";
 
 export function FeriwalaSection() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const company_id = "2f762c5e-5274-4a65-aa66-15a7642a1608";
   const godown_id = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 
   const [balances, setBalances] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
   const [activeVendor, setActiveVendor] = useState(null);
@@ -40,7 +42,6 @@ export function FeriwalaSection() {
   =============================== */
   const loadBalances = async () => {
     try {
-      setLoading(true);
       const res = await fetch(
         `${API_URL}/api/feriwala/balances?company_id=${company_id}&godown_id=${godown_id}`
       );
@@ -50,8 +51,6 @@ export function FeriwalaSection() {
       else toast.error(data.error);
     } catch {
       toast.error("Server error");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -125,17 +124,17 @@ export function FeriwalaSection() {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-gray-900 dark:text-white mb-1">
-            Feriwala Ledger (Owner)
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Feriwala Ledger
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            Outstanding & complete transaction history
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Outstanding & transaction history
           </p>
         </div>
 
-        <Button variant="outline" onClick={loadBalances}>
+        <Button variant="outline" size="sm" onClick={loadBalances} className="w-fit">
           <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
         </Button>
       </div>
@@ -145,11 +144,11 @@ export function FeriwalaSection() {
         placeholder="Search feriwala..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
+        className="w-full sm:max-w-sm"
       />
 
       {/* CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredVendors.map((v) => (
           <Card key={v.vendor_id}>
             <CardHeader>
@@ -178,75 +177,120 @@ export function FeriwalaSection() {
         ))}
       </div>
 
-      {/* ===============================
-         FLOATING LEDGER
-      =============================== */}
-      {activeVendor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-black/40">
 
-        <Card className="w-full max-w-5xl max-h-[85vh] overflow-auto">
-            <CardHeader className="flex flex-row justify-between items-center">
-              <div>
-                <CardTitle>Ledger — {activeVendor.vendor_name}</CardTitle>
-                <CardDescription>Notebook view</CardDescription>
-              </div>
+      <ResizableHistoryModal
+        isOpen={!!activeVendor}
+        onClose={() => setActiveVendor(null)}
+        title={activeVendor ? `Ledger — ${activeVendor.vendor_name}` : "Ledger"}
+        defaultWidth={1000}
+        defaultHeight={650}
+        contentClassName={
+          isDesktop ? "" : "w-screen h-[100svh] max-w-none max-h-none rounded-none"
+        }
+        contentStyle={
+          isDesktop
+            ? undefined
+            : {
+                width: "100vw",
+                maxWidth: "100vw",
+                height: "100svh",
+                maxHeight: "100svh",
+                resize: "none",
+              }
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm text-gray-500">Notebook view</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={exportCSV}
+              disabled={!ledger.length || !activeVendor}
+            >
+              <FileDown className="w-4 h-4 mr-2" /> Export
+            </Button>
+          </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={exportCSV}>
-                  <FileDown className="w-4 h-4 mr-1" /> Export
-                </Button>
-                <Button variant="ghost" onClick={() => setActiveVendor(null)}>
-                  <X />
-                </Button>
-              </div>
-            </CardHeader>
+          {ledgerLoading ? (
+            <p className="text-center py-6">Loading…</p>
+          ) : ledger.length === 0 ? (
+            <p className="text-center py-6 text-gray-500">No transactions</p>
+          ) : isDesktop ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
 
-            <CardContent>
-              {ledgerLoading ? (
-                <p className="text-center py-6">Loading...</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right">Balance</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {ledger.map((l, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{formatDate(l.date)}</TableCell>
-                        <TableCell>
+              <TableBody>
+                {ledger.map((l, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{formatDate(l.date)}</TableCell>
+                    <TableCell>
+                      {l.type === "purchase" ? "Maal" : "Payment"}
+                    </TableCell>
+                    <TableCell>
+                      <pre className="whitespace-pre-wrap text-sm">
+                        {l.description}
+                      </pre>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      ₹{Number(l.amount).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      ₹{Number(l.balance).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="space-y-3">
+              {ledger.map((l, i) => (
+                <Card key={i} className="border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <CardTitle className="text-base">
+                          {formatDate(l.date)}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
                           {l.type === "purchase" ? "Maal" : "Payment"}
-                        </TableCell>
-                        <TableCell>
-                          <pre className="whitespace-pre-wrap text-sm">
-                            {l.description}
-                          </pre>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </CardDescription>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold">
                           ₹{Number(l.amount).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          ₹{Number(l.balance).toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Bal: ₹{Number(l.balance).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-sm text-gray-700 break-words">
+                      {l.description || "—"}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
-              <div className="mt-4 text-right font-semibold">
-                Final Outstanding: ₹{Number(outstanding).toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="pt-2 text-right font-semibold">
+            Final Outstanding: ₹{Number(outstanding).toLocaleString()}
+          </div>
         </div>
-      )}
+      </ResizableHistoryModal>
     </div>
   );
 }

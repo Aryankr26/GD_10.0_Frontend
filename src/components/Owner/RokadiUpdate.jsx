@@ -39,12 +39,15 @@ import { RefreshCcw, Wallet, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { formatINR } from "../../utils/currencyFormat";
 import { OwnerReadOnlyBadge } from "./OwnerBadge";
+import { ResizableHistoryModal } from "./ResizableHistoryModal";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 const API_URL = "https://gd-10-0-backend-1.onrender.com";
 const COMPANY_ID = "2f762c5e-5274-4a65-aa66-15a7642a1608";
 const GODOWN_ID = "fbf61954-4d32-4cb4-92ea-d0fe3be01311";
 
 export function RokadiUpdate() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [cashAccounts, setCashAccounts] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [totalRokadi, setTotalRokadi] = useState(0);
@@ -218,31 +221,31 @@ const exportToCSV = (rows, filename) => {
     <div className="space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-gray-900 mb-1">Rokadi Update</h2>
-          <p className="text-gray-500">Cash & bank position</p>
+          <h2 className="text-lg font-semibold text-gray-900">Rokadi Update</h2>
+          <p className="text-sm text-gray-500">Cash & bank position</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <OwnerReadOnlyBadge />
-          <Button variant="outline" onClick={loadRokadi}>
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
+          <Button variant="outline" size="sm" onClick={loadRokadi}>
+            <RefreshCcw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
 
       {/* TOTAL */}
       <Card className="border-2 border-green-200 bg-green-50">
-        <CardHeader className="flex flex-row justify-between items-center">
+        <CardHeader className="flex flex-row justify-between items-center pb-2">
           <div>
-            <CardTitle className="text-green-700">Total Rokadi</CardTitle>
-            <CardDescription>Cash + Bank</CardDescription>
+            <CardTitle className="text-green-700 text-base sm:text-lg">Total Rokadi</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Cash + Bank</CardDescription>
           </div>
-          <Wallet className="w-8 h-8 text-green-700" />
+          <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-green-700">
+          <div className="text-2xl sm:text-3xl font-bold text-green-700">
             {formatINR(totalRokadi)}
           </div>
         </CardContent>
@@ -258,64 +261,127 @@ const exportToCSV = (rows, filename) => {
 
           <div className="flex gap-2">
             {cashAccounts.length > 0 && (
-              <Dialog
-                open={cashHistoryOpen}
-                onOpenChange={(v) => {
-                  setCashHistoryOpen(v);
-                  if (v) loadCashHistory();
-                }}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">History</Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                  <DialogHeader className="flex flex-row items-center justify-between">
-  <DialogTitle>Cash History</DialogTitle>
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setCashHistoryOpen(true);
+                    loadCashHistory();
+                  }}
+                >
+                  History
+                </Button>
+                <ResizableHistoryModal
+                  isOpen={cashHistoryOpen}
+                  onClose={() => setCashHistoryOpen(false)}
+                  title="Cash History"
+                  defaultWidth={900}
+                  defaultHeight={600}
+                  contentClassName={isDesktop ? "" : "w-screen h-[100svh] max-w-none max-h-none rounded-none"}
+                  contentStyle={
+                    isDesktop
+                      ? undefined
+                      : {
+                          width: "100vw",
+                          maxWidth: "100vw",
+                          height: "100svh",
+                          maxHeight: "100svh",
+                          resize: "none",
+                        }
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          exportToCSV(
+                            cashTransactions,
+                            `Cash_History_${new Date().toISOString().slice(0,10)}.csv`
+                          )
+                        }
+                      >
+                        Export CSV
+                      </Button>
+                    </div>
 
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={() =>
-      exportToCSV(
-        cashTransactions,
-        `Cash_History_${new Date().toISOString().slice(0,10)}.csv`
-      )
-    }
-  >
-    Export
-  </Button>
-</DialogHeader>
-
-                  {cashLoading ? (
-                    <p className="text-center py-6">Loading…</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Particulars</TableHead>
-                          <TableHead className="text-right">Debit</TableHead>
-                          <TableHead className="text-right">Credit</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {cashTransactions.map(t => (
-                          <TableRow key={t.id}>
-                            <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
-                            <TableCell>{t.reference || t.category}</TableCell>
-                            <TableCell className="text-right text-red-600">
-                              {t.type === "debit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
-                            <TableCell className="text-right text-green-600">
-                              {t.type === "credit" ? formatINR(t.amount) : "-"}
-                            </TableCell>
+                    {cashLoading ? (
+                      <p className="text-center py-6">Loading…</p>
+                    ) : cashTransactions.length === 0 ? (
+                      <p className="text-center py-6 text-gray-500">
+                        No transactions
+                      </p>
+                    ) : isDesktop ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Particulars</TableHead>
+                            <TableHead className="text-right">Debit</TableHead>
+                            <TableHead className="text-right">Credit</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </DialogContent>
-              </Dialog>
+                        </TableHeader>
+                        <TableBody>
+                          {cashTransactions.map((t) => (
+                            <TableRow key={t.id}>
+                              <TableCell>
+                                {new Date(t.date).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>{t.reference || t.category}</TableCell>
+                              <TableCell className="text-right text-red-600">
+                                {t.type === "debit" ? formatINR(t.amount) : "-"}
+                              </TableCell>
+                              <TableCell className="text-right text-green-600">
+                                {t.type === "credit" ? formatINR(t.amount) : "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="space-y-3">
+                        {cashTransactions.map((t) => {
+                          const particulars = t.reference || t.category || "—";
+                          const debit = t.type === "debit" ? Number(t.amount || 0) : 0;
+                          const credit = t.type === "credit" ? Number(t.amount || 0) : 0;
+                          return (
+                            <Card key={t.id} className="border">
+                              <CardHeader className="pb-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <CardTitle className="text-base">
+                                      {new Date(t.date).toLocaleDateString()}
+                                    </CardTitle>
+                                    <p className="text-sm text-gray-600 break-words">
+                                      {particulars}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    {debit > 0 ? (
+                                      <div className="text-lg font-semibold text-red-600">
+                                        {formatINR(debit)}
+                                      </div>
+                                    ) : (
+                                      <div className="text-lg font-semibold text-green-600">
+                                        {formatINR(credit)}
+                                      </div>
+                                    )}
+                                    <div className="text-xs text-gray-500">
+                                      {debit > 0 ? "Debit" : "Credit"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </ResizableHistoryModal>
+              </>
             )}
 
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
@@ -398,7 +464,7 @@ const exportToCSV = (rows, filename) => {
         </CardHeader>
 
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {cashAccounts.map(a => (
               <Card key={a.id}>
                 <CardHeader>
@@ -421,53 +487,74 @@ const exportToCSV = (rows, filename) => {
           <CardTitle>Bank</CardTitle>
 
           {bankAccounts.length > 0 && (
-            <Dialog
-              open={bankHistoryOpen}
-              onOpenChange={(v) => {
-                setBankHistoryOpen(v);
-                if (v) loadBankHistory();
-              }}
-            >
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">History</Button>
-              </DialogTrigger>
+            <>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setBankHistoryOpen(true);
+                  loadBankHistory();
+                }}
+              >
+                History
+              </Button>
+              <ResizableHistoryModal
+                isOpen={bankHistoryOpen}
+                onClose={() => setBankHistoryOpen(false)}
+                title="Bank Statement"
+                defaultWidth={900}
+                defaultHeight={600}
+                contentClassName={isDesktop ? "" : "w-screen h-[100svh] max-w-none max-h-none rounded-none"}
+                contentStyle={
+                  isDesktop
+                    ? undefined
+                    : {
+                        width: "100vw",
+                        maxWidth: "100vw",
+                        height: "100svh",
+                        maxHeight: "100svh",
+                        resize: "none",
+                      }
+                }
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        exportToCSV(
+                          bankTransactions,
+                          `Bank_History_${new Date().toISOString().slice(0,10)}.csv`
+                        )
+                      }
+                    >
+                      Export CSV
+                    </Button>
+                  </div>
 
-              <DialogContent className="max-w-3xl">
-                <DialogHeader className="flex flex-row items-center justify-between">
-  <DialogTitle>Bank Statement</DialogTitle>
-
-  <Button
-    size="sm"
-    variant="outline"
-    onClick={() =>
-      exportToCSV(
-        bankTransactions,
-        `Bank_History_${new Date().toISOString().slice(0,10)}.csv`
-      )
-    }
-  >
-    Export
-  </Button>
-</DialogHeader>
-
-
-                {bankLoading ? (
-                  <p className="text-center py-6">Loading…</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Particulars</TableHead>
-                        <TableHead className="text-right">Debit</TableHead>
-                        <TableHead className="text-right">Credit</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bankTransactions.length > 0 ? (
-                        bankTransactions.map(t => (
+                  {bankLoading ? (
+                    <p className="text-center py-6">Loading…</p>
+                  ) : bankTransactions.length === 0 ? (
+                    <p className="text-center py-6 text-gray-500">
+                      No transactions
+                    </p>
+                  ) : isDesktop ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Particulars</TableHead>
+                          <TableHead className="text-right">Debit</TableHead>
+                          <TableHead className="text-right">Credit</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bankTransactions.map((t) => (
                           <TableRow key={t.id}>
-                            <TableCell>{new Date(t.date).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              {new Date(t.date).toLocaleDateString()}
+                            </TableCell>
                             <TableCell>{t.reference || t.category}</TableCell>
                             <TableCell className="text-right text-red-600">
                               {t.type === "debit" ? formatINR(t.amount) : "-"}
@@ -476,19 +563,51 @@ const exportToCSV = (rows, filename) => {
                               {t.type === "credit" ? formatINR(t.amount) : "-"}
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6">
-                            No transactions
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
-              </DialogContent>
-            </Dialog>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="space-y-3">
+                      {bankTransactions.map((t) => {
+                        const particulars = t.reference || t.category || "—";
+                        const debit = t.type === "debit" ? Number(t.amount || 0) : 0;
+                        const credit = t.type === "credit" ? Number(t.amount || 0) : 0;
+                        return (
+                          <Card key={t.id} className="border">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <CardTitle className="text-base">
+                                    {new Date(t.date).toLocaleDateString()}
+                                  </CardTitle>
+                                  <p className="text-sm text-gray-600 break-words">
+                                    {particulars}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  {debit > 0 ? (
+                                    <div className="text-lg font-semibold text-red-600">
+                                      {formatINR(debit)}
+                                    </div>
+                                  ) : (
+                                    <div className="text-lg font-semibold text-green-600">
+                                      {formatINR(credit)}
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-gray-500">
+                                    {debit > 0 ? "Debit" : "Credit"}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardHeader>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </ResizableHistoryModal>
+            </>
           )}
         </CardHeader>
 

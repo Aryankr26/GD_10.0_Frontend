@@ -20,6 +20,7 @@ import {
 import { Plus, Trash2, Save, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "../../utils/dateFormat";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 const MATERIAL_TYPES = [
   "Iron",
@@ -31,6 +32,7 @@ const MATERIAL_TYPES = [
 ];
 
 export function PartyManager() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [sales, setSales] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -281,54 +283,96 @@ export function PartyManager() {
             </form>
           )}
 
-          {/* Sales Table */}
-          <div className="overflow-x-auto mt-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Buyer</TableHead>
-                  <TableHead>Material</TableHead>
-                  <TableHead>Weight (kg)</TableHead>
-                  <TableHead>Rate (₹)</TableHead>
-                  <TableHead>Amount (₹)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sales.length === 0 ? (
+          {/* Sales Records */}
+          {isDesktop ? (
+            <div className="overflow-x-auto mt-6">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-center text-gray-500 py-8"
-                    >
-                      No sales records yet.
-                    </TableCell>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Buyer</TableHead>
+                    <TableHead>Material</TableHead>
+                    <TableHead>Weight (kg)</TableHead>
+                    <TableHead>Rate (₹)</TableHead>
+                    <TableHead>Amount (₹)</TableHead>
                   </TableRow>
-                ) : (
-                  sales.map((sale) =>
-                    sale.items.map((item, i) => (
-                      <TableRow key={`${sale.id}-${i}`}>
-                        {i === 0 && (
-                          <>
-                            <TableCell rowSpan={sale.items.length}>
-                              {formatDate(sale.date)}
-                            </TableCell>
-                            <TableCell rowSpan={sale.items.length}>
-                              {sale.buyer}
-                            </TableCell>
-                          </>
-                        )}
-                        <TableCell>{item.material}</TableCell>
-                        <TableCell>{item.weight}</TableCell>
-                        <TableCell>{item.rate}</TableCell>
-                        <TableCell>{item.amount}</TableCell>
-                      </TableRow>
-                    ))
-                  )
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {sales.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-gray-500 py-8"
+                      >
+                        No sales records yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sales.map((sale) =>
+                      sale.items.map((item, i) => (
+                        <TableRow key={`${sale.id}-${i}`}>
+                          {i === 0 && (
+                            <>
+                              <TableCell rowSpan={sale.items.length}>
+                                {formatDate(sale.date)}
+                              </TableCell>
+                              <TableCell rowSpan={sale.items.length}>
+                                {sale.buyer}
+                              </TableCell>
+                            </>
+                          )}
+                          <TableCell>{item.material}</TableCell>
+                          <TableCell>{item.weight}</TableCell>
+                          <TableCell>{item.rate}</TableCell>
+                          <TableCell>{item.amount}</TableCell>
+                        </TableRow>
+                      ))
+                    )
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3 mt-6">
+              {sales.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No sales records yet.</p>
+              ) : (
+                sales.flatMap((sale) =>
+                  (sale.items || []).map((item, i) => (
+                    <Card key={`${sale.id}-${i}`} className="w-full">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{sale.buyer || "—"}</p>
+                            <p className="text-sm text-gray-500 truncate">{formatDate(sale.date)}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-xs text-gray-500">Amount</p>
+                            <p className="text-sm font-semibold text-gray-900">₹{Number(item.amount || 0).toLocaleString("en-IN")}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Material</p>
+                            <p className="text-sm text-gray-900 truncate">{item.material || "—"}</p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Weight</p>
+                            <p className="text-sm text-gray-900 truncate">{item.weight || "—"} kg</p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Rate</p>
+                            <p className="text-sm text-gray-900 truncate">₹{Number(item.rate || 0).toLocaleString("en-IN")}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -20,11 +20,13 @@ import {
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Save, X } from "lucide-react";
 import { formatDate } from "../../utils/dateFormat";
+import { useMediaQuery } from "../../utils/useMediaQuery";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://gd-10-0-backend-1.onrender.com";
 
 
 export function TruckDriverManager() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [truckRecords, setTruckRecords] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -277,60 +279,117 @@ export function TruckDriverManager() {
             </form>
           )}
 
-          {/* Table Section */}
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Driver</TableHead>
-                  <TableHead>Vehicle No.</TableHead>
-                  <TableHead>Trip</TableHead>
-                  <TableHead>Cost</TableHead>
-                  <TableHead>Fuel</TableHead>
-                  <TableHead>Misc</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Return</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {truckRecords.length === 0 ? (
+          {/* Records Section */}
+          {isDesktop ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-gray-500 py-8">
-                      No truck records yet.
-                    </TableCell>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Driver</TableHead>
+                    <TableHead>Vehicle No.</TableHead>
+                    <TableHead>Trip</TableHead>
+                    <TableHead>Cost</TableHead>
+                    <TableHead>Fuel</TableHead>
+                    <TableHead>Misc</TableHead>
+                    <TableHead>Paid</TableHead>
+                    <TableHead>Return</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ) : (
-                  truckRecords.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>{formatDate(t.date)}</TableCell>
-                      <TableCell>{t.driver_name}</TableCell>
-                      <TableCell>{t.vehicle_number}</TableCell>
-                      <TableCell>{t.trip_details}</TableCell>
-                      <TableCell>₹{t.cost}</TableCell>
-                      <TableCell>₹{t.fuel_cost}</TableCell>
-                      <TableCell>₹{t.miscellaneous}</TableCell>
-                      <TableCell className="text-green-600">₹{t.amount_paid}</TableCell>
-                      <TableCell className="text-blue-600 font-semibold">
-                        ₹{t.return_amount.toLocaleString("en-IN")}
+                </TableHeader>
+                <TableBody>
+                  {truckRecords.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center text-gray-500 py-8">
+                        No truck records yet.
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(t)}>
+                    </TableRow>
+                  ) : (
+                    truckRecords.map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell>{formatDate(t.date)}</TableCell>
+                        <TableCell>{t.driver_name}</TableCell>
+                        <TableCell>{t.vehicle_number}</TableCell>
+                        <TableCell>{t.trip_details}</TableCell>
+                        <TableCell>₹{t.cost}</TableCell>
+                        <TableCell>₹{t.fuel_cost}</TableCell>
+                        <TableCell>₹{t.miscellaneous}</TableCell>
+                        <TableCell className="text-green-600">₹{t.amount_paid}</TableCell>
+                        <TableCell className="text-blue-600 font-semibold">
+                          ₹{Number(t.return_amount || 0).toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(t)}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDelete(t.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {truckRecords.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No truck records yet.</p>
+              ) : (
+                truckRecords.map((t) => (
+                  <Card key={t.id} className="w-full">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{t.driver_name || "—"}</p>
+                          <p className="text-sm text-gray-500 truncate">{formatDate(t.date)}{t.vehicle_number ? ` • ${t.vehicle_number}` : ""}</p>
+                        </div>
+                        <div className="shrink-0 flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(t)} aria-label="Edit">
                             <Pencil className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleDelete(t.id)}>
+                          <Button size="sm" variant="outline" onClick={() => handleDelete(t.id)} aria-label="Delete">
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500">Trip</p>
+                        <p className="text-sm text-gray-900 break-words">{t.trip_details || "—"}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs text-gray-500">Cost</p>
+                          <p className="text-sm text-gray-900">₹{Number(t.cost || 0).toLocaleString("en-IN")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Fuel</p>
+                          <p className="text-sm text-gray-900">₹{Number(t.fuel_cost || 0).toLocaleString("en-IN")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Misc</p>
+                          <p className="text-sm text-gray-900">₹{Number(t.miscellaneous || 0).toLocaleString("en-IN")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Paid</p>
+                          <p className="text-sm font-semibold text-green-600">₹{Number(t.amount_paid || 0).toLocaleString("en-IN")}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-500">Return</p>
+                          <p className="text-sm font-semibold text-blue-600">₹{Number(t.return_amount || 0).toLocaleString("en-IN")}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
