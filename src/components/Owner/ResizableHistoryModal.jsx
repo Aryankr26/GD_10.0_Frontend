@@ -59,15 +59,16 @@ export function ResizableHistoryModal({
           `}
         >
           <div className="flex h-full flex-col">
-            <DialogHeader className="relative shrink-0 border-b px-4 py-3">
-              <DialogTitle>{title}</DialogTitle>
-
-              <DialogClose
-                className="absolute right-3 top-2.5 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                aria-label="Close"
-              >
-                <XIcon className="h-4 w-4" />
-              </DialogClose>
+            <DialogHeader className="shrink-0 border-b px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <DialogTitle className="min-w-0 truncate">{title}</DialogTitle>
+                <DialogClose
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="Close"
+                >
+                  <XIcon className="h-4 w-4" />
+                </DialogClose>
+              </div>
             </DialogHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
