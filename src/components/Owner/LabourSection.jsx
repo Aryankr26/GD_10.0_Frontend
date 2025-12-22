@@ -571,7 +571,7 @@ export function LabourSection() {
             )}
           </div>
 
-          <DialogFooter className="sticky bottom-0 bg-white dark:bg-gray-800 pt-3 border-t flex justify-between gap-2">
+          <DialogFooter className="sticky bottom-0 bg-white dark:bg-gray-800 pt-3 border-t flex flex-col md:flex-row md:justify-between gap-2">
             <Button variant="destructive" onClick={handleDeleteWorker}>
               <Trash2 className="w-4 h-4 mr-1" /> Delete
             </Button>

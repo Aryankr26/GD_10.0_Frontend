@@ -155,7 +155,7 @@ export default function MaalIn() {
       </div>
 
       {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Total Weight</CardTitle>
